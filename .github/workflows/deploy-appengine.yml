@@ -11,13 +11,12 @@ jobs:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v2
-
     - uses: actions/setup-node@master
       with:
         node-version: 12.x
-
     - name: npm install
       run: npm install
-
     - name: npm lint
       run: npm run lint
+    - name: npm test
+      run: npm run test

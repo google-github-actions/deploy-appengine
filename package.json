@@ -6,7 +6,8 @@
   "scripts": {
     "build": "ncc build src/main.ts",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write **/*.ts"
+    "format": "prettier --write **/*.ts",
+    "test": "mocha -r ts-node/register -t 30s 'setupGcloudSDK/tests/*.test.ts'"
   },
   "repository": {
     "type": "git",
@@ -23,14 +24,16 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/core": "^1.2.6",
-    "@actions/exec": "^1.0.3",
+    "@actions/exec": "^1.0.4",
     "@actions/github": "^2.1.1",
     "@actions/tool-cache": "^1.3.1",
     "@types/js-base64": "^2.3.1",
+    "@lifeomic/attempt": "^3.0.0",
     "@types/tmp": "^0.1.0",
     "child_process": "^1.0.2",
     "js-base64": "^2.5.2",
-    "tmp": "^0.1.0"
+    "tmp": "^0.1.0",
+    "typed-rest-client": "^1.7.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.x",

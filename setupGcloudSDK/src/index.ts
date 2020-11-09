@@ -22,6 +22,7 @@ import { getReleaseURL } from './format-url';
 import * as downloadUtil from './download-util';
 import * as installUtil from './install-util';
 import { getLatestGcloudSDKVersion } from './version-util';
+import { ExecOptions } from '@actions/exec/lib/interfaces';
 
 export { getLatestGcloudSDKVersion };
 
@@ -173,7 +174,7 @@ export async function authenticateGcloudSDK(
       '--key-file',
       '-',
     ],
-    options,
+    options as ExecOptions,
   );
 }
 
