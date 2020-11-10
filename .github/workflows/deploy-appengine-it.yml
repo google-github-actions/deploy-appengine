@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   gcloud:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} # Run if not a fork
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
@@ -56,6 +57,7 @@ jobs:
           --retry-max-time 300
 
   b64-json:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     name: with base64 json creds
     runs-on: ubuntu-latest
     steps:
@@ -107,6 +109,7 @@ jobs:
       run: gcloud app versions delete b64-json --quiet
 
   json:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     name: with json creds
     runs-on: ubuntu-latest
     steps:
