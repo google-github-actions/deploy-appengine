@@ -4,10 +4,13 @@ on: [push]
 
 jobs:
   gcloud:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} # Run if not a fork
+    # if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} # Run if not a fork
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
+    - run: echo ${{ github.event.pull_request.head.repo.full_name }}
+    - run: echo ${{ github.repository }}
+    - run: echo ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     - uses: actions/checkout@v2
     - uses: google-github-actions/setup-gcloud@master
       with:
