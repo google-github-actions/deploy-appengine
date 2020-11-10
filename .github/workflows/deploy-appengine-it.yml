@@ -8,9 +8,9 @@ jobs:
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
-    - run: echo ${{ github.event.pull_request.head.repo.full_name }}
+    - run: echo ${{ github.event.pull_request.repo.full_name }}
     - run: echo ${{ github.repository }}
-    - run: echo ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    - run: echo ${{ github.event.pull_request.repo }}
     - uses: actions/checkout@v2
     - uses: google-github-actions/setup-gcloud@master
       with:
