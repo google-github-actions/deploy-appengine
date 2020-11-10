@@ -45,6 +45,7 @@ jobs:
         project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
         deliverables: ${{ github.workspace }}/app.yaml
         version: gcloud
+        promote: false
     - name: Test Output
       run: |-
         curl '${{ steps.deploy.outputs.url }}' \
