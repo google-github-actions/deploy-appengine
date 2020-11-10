@@ -1,10 +1,10 @@
 name: deploy-appengine Integration
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   gcloud:
-    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to deploy local PRs
+    if: ${{ github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name}}
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +60,7 @@ jobs:
           --retry-max-time 300
 
   b64-json:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name}}
     name: with base64 json creds
     runs-on: ubuntu-latest
     steps:
@@ -112,7 +112,7 @@ jobs:
       run: gcloud app versions delete b64-json --quiet
 
   json:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name}}
     name: with json creds
     runs-on: ubuntu-latest
     steps:
