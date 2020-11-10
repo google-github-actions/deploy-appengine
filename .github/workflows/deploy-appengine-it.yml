@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   gcloud:
-    # if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} # Run if not a fork
+    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to deploy local PRs
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
