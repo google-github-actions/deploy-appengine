@@ -18,7 +18,11 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '../setupGcloudSDK/src/';
 
+export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
+export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
+
 async function run(): Promise<void> {
+  core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
     // Get action inputs.
     let projectId = core.getInput('project_id');
