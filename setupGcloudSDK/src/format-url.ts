@@ -67,7 +67,7 @@ export async function getReleaseURL(
 ): Promise<string> {
   try {
     const url = formatReleaseURL(os, arch, version);
-    const client = new httpm.HttpClient();
+    const client = new httpm.HttpClient('github-actions-setup-gcloud-sdk');
     return retry(
       async () => {
         const res = await client.head(url);
