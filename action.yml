@@ -14,9 +14,7 @@
 name: Deploy to Google App Engine
 author: Google LLC
 description: |-
-  Deploy an application to Google App Engine, a fully managed, serverless
-  platform for developing and hosting web applications at scale. Learn more
-  about App Engine at https://cloud.google.com/appengine.
+  Use this action to deploy an application to Google App Engine.
 
 inputs:
   project_id:
