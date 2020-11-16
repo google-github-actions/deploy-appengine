@@ -1070,14 +1070,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const httpm = __importStar(__webpack_require__(874));
 const attempt_1 = __webpack_require__(503);
-const install_util_1 = __webpack_require__(593);
 /**
  * @returns The latest stable version of the gcloud SDK.
  */
 function getLatestGcloudSDKVersion() {
     return __awaiter(this, void 0, void 0, function* () {
         const queryUrl = 'https://dl.google.com/dl/cloudsdk/channels/rapid/components-2.json';
-        const client = new httpm.HttpClient(install_util_1.GCLOUD_METRICS_LABEL);
+        const client = new httpm.HttpClient('github-actions-setup-gcloud-sdk');
         return yield attempt_1.retry(() => __awaiter(this, void 0, void 0, function* () {
             const res = yield client.get(queryUrl);
             if (res.message.statusCode != 200) {
@@ -1189,7 +1188,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const httpm = __importStar(__webpack_require__(874));
 const attempt_1 = __webpack_require__(503);
-const install_util_1 = __webpack_require__(593);
 /**
  * Formats the gcloud SDK release URL according to the specified arguments.
  *
@@ -1232,7 +1230,7 @@ function getReleaseURL(os, arch, version) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const url = formatReleaseURL(os, arch, version);
-            const client = new httpm.HttpClient(install_util_1.GCLOUD_METRICS_LABEL);
+            const client = new httpm.HttpClient('github-actions-setup-gcloud-sdk');
             return attempt_1.retry(() => __awaiter(this, void 0, void 0, function* () {
                 const res = yield client.head(url);
                 if (res.message.statusCode === 200) {
@@ -2613,8 +2611,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const setupGcloud = __importStar(__webpack_require__(994));
+exports.GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
+exports.GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.exportVariable(exports.GCLOUD_METRICS_ENV_VAR, exports.GCLOUD_METRICS_LABEL);
         try {
             // Get action inputs.
             let projectId = core.getInput('project_id');
@@ -9267,8 +9268,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const toolCache = __importStar(__webpack_require__(533));
 const core = __importStar(__webpack_require__(470));
 const path_1 = __importDefault(__webpack_require__(622));
-exports.GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
-exports.GCLOUD_METRICS_LABEL = 'github-actions-setup-gcloud';
 /**
  * Installs the gcloud SDK into the actions environment.
  *
@@ -9282,7 +9281,6 @@ function installGcloudSDK(version, gcloudExtPath) {
         let toolPath = yield toolCache.cacheDir(toolRoot, 'gcloud', version);
         toolPath = path_1.default.join(toolPath, 'bin');
         core.addPath(toolPath);
-        core.exportVariable(exports.GCLOUD_METRICS_ENV_VAR, exports.GCLOUD_METRICS_LABEL);
         return toolPath;
     });
 }
