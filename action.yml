@@ -14,7 +14,7 @@
 name: Deploy to Google App Engine
 author: Google LLC
 description: |-
-  Use this  action to deploy an application to Google App Engine.
+  Use this action to deploy an application to Google App Engine.
 
 inputs:
   project_id:
