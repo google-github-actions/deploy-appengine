@@ -79,11 +79,10 @@ permissions to access the secrets being requested.
 
 Roles needed:
 
-- Storage Admin (`roles/compute.storageAdmin`): to upload files
-- Cloud Build Editor (`cloudbuild.builds.editor`): to build the application
-- App Engine roles:
-  - Deployer (`roles/appengine.deployer`): Can deploy but can not promote
-  - Admin (`roles/appengine.appAdmin`): Can manage all App Engine resources (not recommended)
+- App Engine Deployer
+- App Engine Service Admin
+- Cloud Build Service Account
+- Service Account User
 
 *Note:* An owner will be needed to create the App Engine application
 
