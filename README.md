@@ -133,6 +133,73 @@ only works using a custom runner hosted on GCP.**
 The action will automatically detect and use the Application Default
 Credentials.
 
+## Example Workflows
+
+* [Deploy from source](#deploy-from-source)
+
+### Setup
+
+1.  Create a new Google Cloud Project (or select an existing project).
+
+1. [Initialize your App Engine app with your project](https://cloud.google.com/appengine/docs/standard/nodejs/console#console).
+
+1.  [Create a Google Cloud service account][sa] or select an existing one.
+
+1.  Add the the following [Cloud IAM roles][roles] to your service account:
+
+    - `App Engine Admin` - allows for the creation of new App Engine apps
+
+    - `Service Account User` -  required to deploy to App Engine as service account
+
+    - `Storage Admin` - allows upload of source code
+
+    - `Cloud Build Editor` - allows building of source code
+
+1.  [Download a JSON service account key][create-key] for the service account.
+
+1.  Add the following [secrets to your repository's secrets][gh-secret]:
+
+    - `GCP_PROJECT`: Google Cloud project ID
+
+    - `GCP_SA_KEY`: the downloaded service account key
+
+### Deploy from source
+
+To run this workflow, push to the branch named `example`:
+
+```sh
+git push YOUR-FORK main:example
+```
+
+## Migrating from `setup-gcloud`
+
+Example using `setup-gcloud`:
+
+```YAML
+- name: Setup Cloud SDK
+  uses: google-github-actions/setup-gcloud@v0.2.0
+  with:
+    project_id: ${{ env.PROJECT_ID }}
+    service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+- name: Deploy to App Engine
+  run: gcloud app deploy app.yaml --quiet --no-promote --version v1
+
+```
+
+Migrated to `deploy-appengine`:
+
+```YAML
+- name: Deploy to App Engine
+  uses: google-github-actions/deploy-appengine@v0.2.0
+  with:
+    deliverables: app.yaml
+    project_id: ${{ secrets.GCP_PROJECT }}
+    credentials: ${{ secrets.GCP_SA_KEY }}
+    promote: false
+    version: v1
+```
+
 [gae]: https://cloud.google.com/appengine
 [sm]: https://cloud.google.com/secret-manager
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
