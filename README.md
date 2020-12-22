@@ -20,7 +20,7 @@ available to later build steps via outputs. This allows you to parameterize your
 App Engine deployments.
 
 **Note:** This action will install [gcloud](https://cloud.google.com/sdk) in the
-background if not using in with the [`setup-gcloud` action](../setup-gcloud/README.md).
+background if not using in with the [`setup-gcloud` action][setup-gcloud].
 
 ## Prerequisites
 
@@ -138,4 +138,4 @@ Credentials.
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
 [gh-runners]: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
 [gh-secret]: https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
-[setup-gcloud]: ../setup-gcloud
+[setup-gcloud]: https://github.com/google-github-actions/setup-gcloud/
