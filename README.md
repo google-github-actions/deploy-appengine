@@ -77,13 +77,12 @@ for more information.
 There are a few ways to authenticate this action. The caller must have
 permissions to access the secrets being requested.
 
-Roles needed:
+[Roles needed](https://cloud.google.com/appengine/docs/standard/python/roles#predefined_roles):
 
+- App Engine Admin (`roles/appengine.appAdmin`): can manage all App Engine resources
+- Service Account User (`roles/iam.serviceAccountUser`): to deploy as the service account
 - Storage Admin (`roles/compute.storageAdmin`): to upload files
 - Cloud Build Editor (`cloudbuild.builds.editor`): to build the application
-- App Engine roles:
-  - Deployer (`roles/appengine.deployer`): Can deploy but can not promote
-  - Admin (`roles/appengine.appAdmin`): Can manage all App Engine resources (not recommended)
 
 *Note:* An owner will be needed to create the App Engine application
 
@@ -139,7 +138,9 @@ Credentials.
 
 ### Setup
 
-1.  Create a new Google Cloud Project (or select an existing project).
+1.  Clone this repo.
+
+1. Create a new Google Cloud Project (or select an existing project).
 
 1. [Initialize your App Engine app with your project](https://cloud.google.com/appengine/docs/standard/nodejs/console#console).
 
