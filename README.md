@@ -83,6 +83,7 @@ permissions to access the secrets being requested.
 - Service Account User (`roles/iam.serviceAccountUser`): to deploy as the service account
 - Storage Admin (`roles/compute.storageAdmin`): to upload files
 - Cloud Build Editor (`roles/cloudbuild.builds.editor`): to build the application
+- Storage Object Admin (`roles/storage.objectAdmin'): to use storage
 
 *Note:* An owner will be needed to create the App Engine application
 
