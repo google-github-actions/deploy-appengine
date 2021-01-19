@@ -46,6 +46,10 @@ steps:
 - `project_id`: (Optional) ID of the Google Cloud project. If provided, this
   will override the project configured by gcloud.
 
+- `working_directory`: (Optional) The working directory to use. **Actions do not honor
+  [default working-directory settings](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrun).** The `deliverables` input is a 
+  relative path based on this setting.
+
 - `deliverables`: (Optional) The [yaml files](https://cloud.google.com/appengine/docs/standard/nodejs/configuration-files#optional_configuration_files)
   for the services or configurations you want to deploy. If not given, defaults
   to app.yaml in the current directory. If that is not found, attempts to
@@ -207,3 +211,5 @@ Migrated to `deploy-appengine`:
 [gh-runners]: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
 [gh-secret]: https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
 [setup-gcloud]: https://github.com/google-github-actions/setup-gcloud/
+[roles]: https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_service_account_for_a_resource
+[create-key]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys

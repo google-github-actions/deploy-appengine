@@ -17,6 +17,7 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '../setupGcloudSDK/src/';
+import fs from 'fs';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
@@ -26,11 +27,28 @@ async function run(): Promise<void> {
   try {
     // Get action inputs.
     let projectId = core.getInput('project_id');
+    const cwd = core.getInput('working_directory');
     const deliverables = core.getInput('deliverables');
     const imageUrl = core.getInput('image_url');
     const version = core.getInput('version');
     const promote = core.getInput('promote');
     const serviceAccountKey = core.getInput('credentials');
+
+    // Change working directory
+    if (cwd) process.chdir(cwd.trim());
+
+    // Validate deliverables
+    const allDeliverables = deliverables.split(' ');
+    if (allDeliverables[0] == '') allDeliverables[0] = 'app.yaml';
+    for (const deliverable of allDeliverables) {
+      if (!fs.existsSync(deliverable)) {
+        core.error(deliverable + ' is not in path.');
+        const message =
+          'Deliverables can not be found. ' +
+          'Check `working_directory` and `deliverables` input paths.';
+        throw new Error(message);
+      }
+    }
 
     // Install gcloud if not already installed.
     if (!setupGcloud.isInstalled()) {
@@ -60,12 +78,7 @@ async function run(): Promise<void> {
     const toolCommand = setupGcloud.getToolCommand();
 
     // Create app engine gcloud cmd.
-    const appDeployCmd = [
-      'app',
-      'deploy',
-      '--quiet',
-      ...deliverables.split(' '),
-    ];
+    const appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
 
     // Add gcloud flags.
     if (projectId !== '') {

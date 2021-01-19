@@ -1,11 +1,11 @@
-name: deploy-appengine Integration
+name: deploy-appengine Credentials Integration
 
 on: [push, pull_request]
 
 jobs:
-  working-directory:
+  gcloud:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
-    name: with working directory
+    name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,13 +16,12 @@ jobs:
         export_default_credentials: true
     - name: create app
       run: |-
-        mkdir app
-        cat <<EOF > ${{ github.workspace }}/app/app.yaml
+        cat <<EOF > ${{ github.workspace }}/app.yaml
         service: "${{ github.job }}-${{ github.run_number }}"
         runtime: "nodejs10"
         EOF
 
-        cat <<EOF > ${{ github.workspace }}/app/server.js
+        cat <<EOF > ${{ github.workspace }}/server.js
         const http = require('http');
         const server = http.createServer(function (req, res) {
           res.writeHead(200)
@@ -45,7 +44,7 @@ jobs:
       uses: ./
       with:
         project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        working_directory: app/
+        version: gcloud
         promote: false
     - name: Test Output
       run: |-
@@ -61,26 +60,20 @@ jobs:
       if: ${{ always() }}
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
 
-  deliverable:
+  b64-json:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
-    name: with deliverable path
+    name: with base64 json creds
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: google-github-actions/setup-gcloud@master
-      with:
-        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        service_account_key: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_JSON }}
-        export_default_credentials: true
     - name: create app
       run: |-
-        mkdir app
-        cat <<EOF > ${{ github.workspace }}/app/app.yaml
+        cat <<EOF > ${{ github.workspace }}/app.yaml
         service: "${{ github.job }}-${{ github.run_number }}"
         runtime: "nodejs10"
         EOF
 
-        cat <<EOF > ${{ github.workspace }}/app/server.js
+        cat <<EOF > ${{ github.workspace }}/server.js
         const http = require('http');
         const server = http.createServer(function (req, res) {
           res.writeHead(200)
@@ -102,9 +95,9 @@ jobs:
       name: Deploy to App Engine
       uses: ./
       with:
-        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        deliverables: app/app.yaml
-        promote: false
+        credentials: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_B64 }}
+        version: b64-json
+        promote: false # Allows for deletion
     - name: Test Output
       run: |-
         curl '${{ steps.deploy.outputs.url }}' \
@@ -118,18 +111,28 @@ jobs:
     - name: Clean Up
       if: ${{ always() }}
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
-    
-  failure:
+
+  json:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
-    name: with bad path
+    name: with json creds
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: google-github-actions/setup-gcloud@master
-      with:
-        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        service_account_key: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_JSON }}
-        export_default_credentials: true
+    - name: create app
+      run: |-
+        cat <<EOF > ${{ github.workspace }}/app.yaml
+        service: "${{ github.job }}-${{ github.run_number }}"
+        runtime: "nodejs10"
+        EOF
+
+        cat <<EOF > ${{ github.workspace }}/server.js
+        const http = require('http');
+        const server = http.createServer(function (req, res) {
+          res.writeHead(200)
+          res.end('Hello world!');
+        });
+        server.listen(process.env.PORT || 8080);
+        EOF
     - name: Build dependency
       working-directory: setupGcloudSDK
       run: |-
@@ -140,28 +143,23 @@ jobs:
       run: |-
         npm install
         npm run build
-    - id: cwd
+    - id: deploy
+      name: Deploy to App Engine
       uses: ./
-      continue-on-error: true
       with:
-        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        working_directory: this/path/doesnt/exist/
-        promote: false
-    - name: Catch failure
+        credentials: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_JSON }}
+        version: json
+        promote: false # Allows for deletion
+    - name: Test Output
       run: |-
-        if [ ${{ steps.cwd.outcome }} != 'failure' ]; then
-          exit 1
-        fi
-    - id: deliverable
-      uses: ./
-      continue-on-error: true
-      with:
-        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
-        deliverables: this/path/doesnt/exist/app.yaml
-        promote: false
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.deliverable.outcome }} != 'failure' ]; then
-          exit 1
-        fi
-        
+        curl '${{ steps.deploy.outputs.url }}' \
+          --silent \
+          --fail \
+          --location \
+          --retry 5 \
+          --retry-connrefused \
+          --retry-delay 5 \
+          --retry-max-time 300
+    - name: Clean Up
+      if: ${{ always() }}
+      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet

@@ -22,6 +22,12 @@ inputs:
     description: The GCP project ID. Overrides project ID set by credentials.
     required: true
 
+  working_directory:
+    description: |-
+      The path to set the working directory. The deliverables will be referenced
+      from this path.
+    required: false
+
   deliverables:
     description: |-
       The yaml files for the services or configurations you want to deploy.
