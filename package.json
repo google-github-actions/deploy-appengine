@@ -6,8 +6,8 @@
   "scripts": {
     "build": "ncc build src/main.ts",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write **/*.ts",
-    "test": "mocha -r ts-node/register -t 30s 'setupGcloudSDK/tests/*.test.ts'"
+    "format": "prettier --write **/**/*.ts",
+    "test": "mocha -r ts-node/register -t 90s 'setupGcloudSDK/tests/*.test.ts'"
   },
   "repository": {
     "type": "git",
