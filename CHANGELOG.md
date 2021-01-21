@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.2.0...v0.3.0) (2021-01-21)
+
+
+### Features
+
+* Add better error for misshaped credentials ([#22](https://www.github.com/google-github-actions/deploy-appengine/issues/22)) ([c6290d4](https://www.github.com/google-github-actions/deploy-appengine/commit/c6290d4810b64907b2a41ce4dde866e629bab792))
+* add example workflow ([#14](https://www.github.com/google-github-actions/deploy-appengine/issues/14)) ([ee5bf41](https://www.github.com/google-github-actions/deploy-appengine/commit/ee5bf411b807a187809fad3cbf240c80029f12e7))
+* Add working directory input ([#21](https://www.github.com/google-github-actions/deploy-appengine/issues/21)) ([b616de9](https://www.github.com/google-github-actions/deploy-appengine/commit/b616de98e0771e8583e79ff21cee13d53872a5cf))
+
 ## [0.2.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.1.0...v0.2.0) (2020-11-17)
 
 
