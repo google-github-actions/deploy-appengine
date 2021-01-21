@@ -39,8 +39,12 @@ describe('#downloadAndExtractTool', function() {
   });
 
   afterEach(async function() {
-    await io.rmRF(toolDir);
-    await io.rmRF(tempDir);
+    try {
+      await io.rmRF(toolDir);
+      await io.rmRF(tempDir);
+    } catch (err) {
+      console.log('Error occurred during cleanup: ' + err);
+    }
   });
 
   it('downloads and extracts linux version', async function() {
