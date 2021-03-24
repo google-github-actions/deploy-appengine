@@ -97,9 +97,13 @@ export async function isAuthenticated(): Promise<boolean> {
   const stdout = (data: Buffer): void => {
     output += data.toString();
   };
+  const stderr = (data: Buffer): void => {
+    output += data.toString();
+  };
   const options = {
     listeners: {
       stdout,
+      stderr,
     },
   };
 
