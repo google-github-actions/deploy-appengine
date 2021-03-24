@@ -25,7 +25,7 @@ background if not using in with the [`setup-gcloud` action][setup-gcloud].
 ## Prerequisites
 
 This action requires Google Cloud credentials that are authorized to deploy an
-App Engine Application. See the Authorization section below for more information.
+App Engine Application. See the [Authorization](#authorization) section below for more information.
 
 ## Usage
 
@@ -77,7 +77,7 @@ for more information.
 - `url`: The URL of your App Engine Application.
 
 ## Authorization
-
+<a name="authorization"></a>
 There are a few ways to authenticate this action. The caller must have
 permissions to access the secrets being requested.
 
