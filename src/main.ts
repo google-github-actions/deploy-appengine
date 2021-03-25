@@ -59,7 +59,9 @@ async function run(): Promise<void> {
     // Fail if no Project Id is provided if not already set.
     const projectIdSet = await setupGcloud.isProjectIdSet();
     if (!projectIdSet && projectId === '' && serviceAccountKey === '') {
-      core.setFailed('No project Id provided.');
+      throw new Error(
+        'No project Id provided. Ensure you have either project_id and/or credentials inputs are set.',
+      );
     }
 
     // Authenticate gcloud SDK.
@@ -72,7 +74,7 @@ async function run(): Promise<void> {
     }
     const authenticated = await setupGcloud.isAuthenticated();
     if (!authenticated) {
-      core.setFailed('Error authenticating the Cloud SDK.');
+      throw new Error('Error authenticating the Cloud SDK.');
     }
 
     const toolCommand = setupGcloud.getToolCommand();
