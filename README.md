@@ -25,7 +25,7 @@ background if not using in with the [`setup-gcloud` action][setup-gcloud].
 ## Prerequisites
 
 This action requires Google Cloud credentials that are authorized to deploy an
-App Engine Application. See the Authorization section below for more information.
+App Engine Application. See the [Authorization](#authorization) section below for more information.
 
 ## Usage
 
@@ -77,7 +77,7 @@ for more information.
 - `url`: The URL of your App Engine Application.
 
 ## Authorization
-
+<a name="authorization"></a>
 There are a few ways to authenticate this action. The caller must have
 permissions to access the secrets being requested.
 
@@ -146,7 +146,9 @@ Credentials.
 
 1. Create a new Google Cloud Project (or select an existing project).
 
-1. [Initialize your App Engine app with your project](https://cloud.google.com/appengine/docs/standard/nodejs/console#console).
+1. [Initialize your App Engine app with your project][app-engine-nodejs-docs].
+
+1. Enable the [App Engine Admin API][app-engine-admin-api] on your project.
 
 1.  [Create a Google Cloud service account][sa] or select an existing one.
 
@@ -213,3 +215,5 @@ Migrated to `deploy-appengine`:
 [setup-gcloud]: https://github.com/google-github-actions/setup-gcloud/
 [roles]: https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_service_account_for_a_resource
 [create-key]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys
+[app-engine-admin-api]: https://console.cloud.google.com/apis/api/appengine.googleapis.com/overview
+[app-engine-nodejs-docs]: https://cloud.google.com/appengine/docs/standard/nodejs/console#console
