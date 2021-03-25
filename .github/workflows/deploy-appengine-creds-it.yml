@@ -156,9 +156,6 @@ jobs:
     - name: Update app.yaml
       run: |-
         echo "service: ${{ github.job }}-${{ github.run_number }}" >> ${{ github.workspace }}/example-app/app.yaml
-        cat ${{ github.workspace }}/example-app/app.yaml
-        ls ${{ github.workspace }}/example-app/
-        ls ${{ github.workspace }}/
 
     - name: Build dependency
       working-directory: setupGcloudSDK
