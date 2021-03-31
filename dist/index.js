@@ -2652,7 +2652,7 @@ function run() {
             // Fail if no Project Id is provided if not already set.
             const projectIdSet = yield setupGcloud.isProjectIdSet();
             if (!projectIdSet && projectId === '' && serviceAccountKey === '') {
-                core.setFailed('No project Id provided.');
+                throw new Error('No project Id provided. Ensure you have either project_id and/or credentials inputs are set.');
             }
             // Authenticate gcloud SDK.
             if (serviceAccountKey) {
@@ -2664,7 +2664,7 @@ function run() {
             }
             const authenticated = yield setupGcloud.isAuthenticated();
             if (!authenticated) {
-                core.setFailed('Error authenticating the Cloud SDK.');
+                throw new Error('Error authenticating the Cloud SDK.');
             }
             const toolCommand = setupGcloud.getToolCommand();
             // Create app engine gcloud cmd.
@@ -11482,9 +11482,13 @@ function isAuthenticated() {
         const stdout = (data) => {
             output += data.toString();
         };
+        const stderr = (data) => {
+            output += data.toString();
+        };
         const options = {
             listeners: {
                 stdout,
+                stderr,
             },
         };
         const toolCommand = getToolCommand();
