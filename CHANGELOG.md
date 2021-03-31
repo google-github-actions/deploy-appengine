@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.3.1](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.3.0...v0.3.1) (2021-03-31)
+
+
+### Bug Fixes
+
+* Error when project ID or credentials are not provided ([#27](https://www.github.com/google-github-actions/deploy-appengine/issues/27)) ([190e2c1](https://www.github.com/google-github-actions/deploy-appengine/commit/190e2c145a27274614723e75a4efc567864a564a))
+
 ## [0.3.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.2.0...v0.3.0) (2021-01-21)
 
 
