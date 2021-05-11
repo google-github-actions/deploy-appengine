@@ -41,7 +41,7 @@
     "@types/node": "^12.12.27",
     "@typescript-eslint/eslint-plugin": "^2.20.0",
     "@typescript-eslint/parser": "^2.20.0",
-    "@zeit/ncc": "^0.20.x",
+    "@zeit/ncc": "^0.22.0",
     "chai": "^4.2.x",
     "eslint": "^6.8.x",
     "eslint-config-prettier": "^6.10.x",
