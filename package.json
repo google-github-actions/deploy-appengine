@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.x",
-    "@types/mocha": "^7.0.x",
+    "@types/mocha": "^8.0.0",
     "@types/node": "^12.12.27",
     "@typescript-eslint/eslint-plugin": "^2.20.0",
     "@typescript-eslint/parser": "^2.20.0",
@@ -47,7 +47,7 @@
     "eslint-config-prettier": "^6.10.x",
     "eslint-plugin-prettier": "^3.1.x",
     "husky": "^4.2.3",
-    "mocha": "^7.0.x",
+    "mocha": "^8.0.0",
     "prettier": "^1.19.1",
     "ts-node": "^8.6.x",
     "typescript": "^3.7.x"
