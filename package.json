@@ -49,6 +49,6 @@
     "mocha": "^8.0.0",
     "prettier": "^1.19.1",
     "ts-node": "^9.0.0",
-    "typescript": "^3.7.x"
+    "typescript": "^4.0.0"
   }
 }
