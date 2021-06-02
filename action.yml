@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Deploy to Google App Engine
+name: Deploy to App Engine
 author: Google LLC
 description: |-
   Use this action to deploy an application to Google App Engine.
