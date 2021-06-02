@@ -45,7 +45,7 @@ jobs:
       with:
         project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
         working_directory: app/
-        flags: --no-cache
+        flags: --log-http --verbosity=debug
     - name: Test Output
       run: |-
         curl '${{ steps.deploy.outputs.url }}' \
