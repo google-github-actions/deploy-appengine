@@ -32,13 +32,13 @@ import * as downloadUtil from '../src/download-util';
 
 import { getReleaseURL } from '../src/format-url';
 
-describe('#downloadAndExtractTool', function() {
-  beforeEach(async function() {
+describe('#downloadAndExtractTool', function () {
+  beforeEach(async function () {
     await io.rmRF(toolDir);
     await io.rmRF(tempDir);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     try {
       await io.rmRF(toolDir);
       await io.rmRF(tempDir);
@@ -47,7 +47,7 @@ describe('#downloadAndExtractTool', function() {
     }
   });
 
-  it('downloads and extracts linux version', async function() {
+  it('downloads and extracts linux version', async function () {
     if (os.platform() === 'win32') {
       // https://github.com/actions/toolkit/issues/194
       this.skip();
@@ -59,7 +59,7 @@ describe('#downloadAndExtractTool', function() {
     expect(fs.existsSync(extPath)).to.be.true;
   });
 
-  it('downloads and extracts windows version', async function() {
+  it('downloads and extracts windows version', async function () {
     // Use an older version of the Windows release, as the current release is
     // 200MB+ and takes too long to download.
     const url = await getReleaseURL('win32', 'x86_64', '0.9.83');
@@ -68,7 +68,7 @@ describe('#downloadAndExtractTool', function() {
     expect(fs.existsSync(extPath)).to.be.true;
   });
 
-  it('downloads and extracts darwin version', async function() {
+  it('downloads and extracts darwin version', async function () {
     if (os.platform() === 'win32') {
       // https://github.com/actions/toolkit/issues/194
       this.skip();
@@ -80,7 +80,7 @@ describe('#downloadAndExtractTool', function() {
     expect(fs.existsSync(extPath)).to.be.true;
   });
 
-  it('errors on download not found', async function() {
+  it('errors on download not found', async function () {
     downloadUtil
       .downloadAndExtractTool('fakeUrl')
       .then(() => {

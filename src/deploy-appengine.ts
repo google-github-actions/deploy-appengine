@@ -22,7 +22,29 @@ import fs from 'fs';
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
 
-async function run(): Promise<void> {
+export function setUrlOutput(output: string): string | undefined {
+  // regex to match Cloud Run URLs
+  const urlMatch = output.match(/(?<=target url:\s+\[)(.*?)(?=\])/g);
+  //(?<=is \()(.*?)(?=\s*\))
+  if (!urlMatch) {
+    core.warning('Can not find URL.');
+    return undefined;
+  }
+  // Match "tagged" URL or default to service URL
+  const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
+  core.setOutput('url', url);
+  return url;
+}
+
+export function parseFlags(flags: string): RegExpMatchArray {
+  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
+}
+
+/**
+ * Executes the main action. It includes the main business logic and is the
+ * primary entry point. It is documented inline.
+ */
+export async function run(): Promise<void> {
   core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
     // Get action inputs.
@@ -33,6 +55,7 @@ async function run(): Promise<void> {
     const version = core.getInput('version');
     const promote = core.getInput('promote');
     const serviceAccountKey = core.getInput('credentials');
+    const flags = core.getInput('flags');
 
     // Change working directory
     if (cwd) process.chdir(cwd.trim());
@@ -80,7 +103,7 @@ async function run(): Promise<void> {
     const toolCommand = setupGcloud.getToolCommand();
 
     // Create app engine gcloud cmd.
-    const appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
+    let appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
 
     // Add gcloud flags.
     if (projectId !== '') {
@@ -98,37 +121,43 @@ async function run(): Promise<void> {
       appDeployCmd.push('--no-promote');
     }
 
+    // Add optional flags
+    if (flags) {
+      const flagList = parseFlags(flags);
+      if (flagList) appDeployCmd = appDeployCmd.concat(flagList);
+    }
+
     // Get output of gcloud cmd.
     let output = '';
     const stdout = (data: Buffer): void => {
       output += data.toString();
     };
+    let errOutput = '';
+    const stderr = (data: Buffer): void => {
+      errOutput += data.toString();
+    };
 
     const options = {
       listeners: {
-        stderr: stdout,
+        stderr,
+        stdout,
       },
+      silent: true,
     };
-
+    core.info(`running: ${toolCommand} ${appDeployCmd.join(' ')}`);
     // Run gcloud cmd.
-    await exec.exec(toolCommand, appDeployCmd, options);
-
-    // Set url as output.
-    const urlMatch = output.match(
-      /https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.com/,
-    );
-    if (urlMatch) {
-      const url = urlMatch[0];
-      core.setOutput('url', url);
-    } else {
-      core.info(
-        'Can not find URL, defaulting to https://PROJECT_ID.appspot.com',
-      );
-      core.setOutput('url', `https://${projectId}.appspot.com`);
+    try {
+      await exec.exec(toolCommand, appDeployCmd, options);
+      // Set url as output.
+      setUrlOutput(output + errOutput);
+    } catch (error) {
+      if (errOutput) {
+        throw new Error(errOutput);
+      } else {
+        throw new Error(error);
+      }
     }
   } catch (error) {
     core.setFailed(error.message);
   }
 }
-
-run();
