@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.3.1...v0.4.0) (2021-06-04)
+
+
+### Features
+
+* Add flags input and tests ([#57](https://www.github.com/google-github-actions/deploy-appengine/issues/57)) ([8aae463](https://www.github.com/google-github-actions/deploy-appengine/commit/8aae463f646fdf5c6ca3e6c9affbfd7be9d6d664))
+
+
+### Bug Fixes
+
+* **deps:** update dependency @actions/github to v4 ([#48](https://www.github.com/google-github-actions/deploy-appengine/issues/48)) ([22930b1](https://www.github.com/google-github-actions/deploy-appengine/commit/22930b18cbc21992adfe1829f505127deb9e095e))
+* **deps:** update dependency @actions/github to v5 ([#52](https://www.github.com/google-github-actions/deploy-appengine/issues/52)) ([c14ade5](https://www.github.com/google-github-actions/deploy-appengine/commit/c14ade5fdb7581f4a344bcc7c50763bda122d28f))
+* **deps:** update dependency js-base64 to v3 ([#49](https://www.github.com/google-github-actions/deploy-appengine/issues/49)) ([cc49642](https://www.github.com/google-github-actions/deploy-appengine/commit/cc49642f14ab96c60a8707301c5352d87eb61807))
+* **deps:** update dependency tmp to ^0.2.0 ([#41](https://www.github.com/google-github-actions/deploy-appengine/issues/41)) ([a777a6c](https://www.github.com/google-github-actions/deploy-appengine/commit/a777a6cfd250049d3d7a988fc6537fa169e10181))
+
 ### [0.3.1](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.3.0...v0.3.1) (2021-03-31)
 
 
