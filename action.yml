@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Deploy to Google App Engine
+name: Deploy to App Engine
 author: Google LLC
 description: |-
   Use this action to deploy an application to Google App Engine.
@@ -39,7 +39,7 @@ inputs:
   image_url:
     description: |-
       Deploy with a specific container image. The image URL must be from one of
-      the valid GCR hostnames.
+      the valid GCR host names.
     required: false
 
   version:
@@ -59,6 +59,13 @@ inputs:
       Service account key to use for authentication. This should be the JSON
       formatted private key which can be exported from the Cloud Console. The
       value can be raw or base64-encoded.
+    required: false
+
+  flags:
+    description: |-
+      Space separated list of other App Engine flags, examples can be found:
+      https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS. Ex 
+      --service-account=my-account@project.iam.gserviceaccount.com --no-cache
     required: false
 
 outputs:

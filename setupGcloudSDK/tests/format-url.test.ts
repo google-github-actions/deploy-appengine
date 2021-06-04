@@ -23,25 +23,25 @@ import { expect } from 'chai';
 import { TEST_SDK_VERSIONS } from '../src/test-util';
 import { getReleaseURL } from '../src/format-url';
 
-describe('#getReleaseURL', function() {
+describe('#getReleaseURL', function () {
   TEST_SDK_VERSIONS.forEach((version) => {
-    describe(version, function() {
-      it(`finds matching linux version`, async function() {
+    describe(version, function () {
+      it(`finds matching linux version`, async function () {
         const result = await getReleaseURL('linux', 'x86_64', version);
         expect(result).to.be;
       });
 
-      it(`finds matching windows version`, async function() {
+      it(`finds matching windows version`, async function () {
         const result = await getReleaseURL('win32', 'x86_64', version);
         expect(result).to.be;
       });
 
-      it(`finds matching darwin version`, async function() {
+      it(`finds matching darwin version`, async function () {
         const result = await getReleaseURL('darwin', 'x86_64', version);
         expect(result).to.be;
       });
 
-      it(`errors on unsupported OS`, async function() {
+      it(`errors on unsupported OS`, async function () {
         getReleaseURL('temple', 'x86_64', version)
           .then(() => {
             throw new Error('expected error');
@@ -53,7 +53,7 @@ describe('#getReleaseURL', function() {
     });
   });
 
-  it(`errors on unsupported version`, async function() {
+  it(`errors on unsupported version`, async function () {
     getReleaseURL('linux', 'x86_64', 'NOPE')
       .then(() => {
         throw new Error('expected error');

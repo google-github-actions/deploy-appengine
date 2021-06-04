@@ -22,8 +22,8 @@ import { expect } from 'chai';
 
 import { getLatestGcloudSDKVersion } from '../src/version-util';
 
-describe('#getLatestGcloudSDKVersion', function() {
-  it('retrieves latest', async function() {
+describe('#getLatestGcloudSDKVersion', function () {
+  it('retrieves latest', async function () {
     const semVerPattern = /^[0-9]+\.[0-9]+\.[0-9]+$/;
     const result = await getLatestGcloudSDKVersion();
     expect(result).to.be;

@@ -3,6 +3,63 @@ name: deploy-appengine Inputs Tests
 on: [push, pull_request]
 
 jobs:
+  flags:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    name: with flags
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
+        service_account_key: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_JSON }}
+    - name: create app
+      run: |-
+        mkdir app
+        cat <<EOF > ${{ github.workspace }}/app/app.yaml
+        service: "${{ github.job }}-${{ github.run_number }}"
+        runtime: "nodejs10"
+        EOF
+
+        cat <<EOF > ${{ github.workspace }}/app/server.js
+        const http = require('http');
+        const server = http.createServer(function (req, res) {
+          res.writeHead(200)
+          res.end('Hello world!');
+        });
+        server.listen(process.env.PORT || 8080);
+        EOF
+    - name: Build dependency
+      working-directory: setupGcloudSDK
+      run: |-
+        npm install
+        npm run build
+    - id: build
+      name: Build dist
+      run: |-
+        npm install
+        npm run build
+    - id: deploy
+      name: Deploy to App Engine
+      uses: ./
+      with:
+        project_id: ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
+        working_directory: app/
+        flags: --log-http --verbosity=debug
+    - name: Test Output
+      run: |-
+        curl '${{ steps.deploy.outputs.url }}' \
+          --silent \
+          --fail \
+          --location \
+          --retry 5 \
+          --retry-connrefused \
+          --retry-delay 5 \
+          --retry-max-time 300
+    - name: Clean Up
+      if: ${{ always() }}
+      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+
   bad-input:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
     name: with bad inputs
