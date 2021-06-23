@@ -65,6 +65,11 @@ steps:
 
 - `promote`: (Optional) Promote the deployed version to receive all traffic. 
   Possible values: ''|'true'|true|'false'|false, if not specified behavior defaults to promote.
+  
+- `cache`: (Optional) Skip caching mechanisms involved in the deployment process, in particular
+  do not use cached dependencies during the build step. Possible values: ''|'true'|true|'false'|false.
+  
+  
 
 ### app.yaml customizations
 
