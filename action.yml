@@ -48,6 +48,13 @@ inputs:
       deployment. If you do not specify a version, one will be generated for
       you.
     required: false
+    
+  cache:
+    description: |-
+      Skip caching mechanisms involved in the deployment process, in particular
+      do not use cached dependencies during the build step.
+    required: false
+    default: "true"
 
   promote:
     description: Promote the deployed version to receive all traffic.
