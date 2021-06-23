@@ -53,6 +53,7 @@ export async function run(): Promise<void> {
     const deliverables = core.getInput('deliverables');
     const imageUrl = core.getInput('image_url');
     const version = core.getInput('version');
+    const cache = core.getInput('cache');
     const promote = core.getInput('promote');
     const serviceAccountKey = core.getInput('credentials');
     const flags = core.getInput('flags');
@@ -114,6 +115,9 @@ export async function run(): Promise<void> {
     }
     if (version !== '') {
       appDeployCmd.push('--version', version);
+    }
+    if (String(cache).toLowerCase() === 'false') {
+      appDeployCmd.push('--no-cache');
     }
     if (promote === '' || String(promote).toLowerCase() === 'true') {
       appDeployCmd.push('--promote');
