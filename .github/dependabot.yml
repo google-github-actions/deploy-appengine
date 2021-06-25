@@ -8,14 +8,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     commit-message:
       prefix: "chore(deps): "
     rebase-strategy: "disabled"
-    
-  - package-ecosystem: "github-actions"
-    directory: ".github/workflows"
-    schedule:
-      interval: "daily"
-    commit-message:
-      prefix: "chore(deps): "
