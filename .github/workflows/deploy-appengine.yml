@@ -16,7 +16,12 @@ jobs:
         node-version: 12.x
     - name: npm install
       run: npm install
+
     - name: npm lint
       run: npm run lint
+
     - name: npm test
       run: npm run test
+      
+    - name: npm build
+      run: npm run build

@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   gcloud:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with setup-gcloud
     runs-on: ubuntu-latest
     steps:
@@ -54,7 +54,7 @@ jobs:
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
 
   gcloud2:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with setup-gcloud - no project Id
     runs-on: ubuntu-latest
     steps:
@@ -104,7 +104,7 @@ jobs:
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet --project ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
 
   b64-json:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with base64 json creds
     runs-on: ubuntu-latest
     steps:
@@ -148,7 +148,7 @@ jobs:
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
 
   json:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with json creds
     runs-on: ubuntu-latest
     steps:

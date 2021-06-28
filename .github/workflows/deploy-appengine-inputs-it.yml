@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   flags:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with flags
     runs-on: ubuntu-latest
     steps:
@@ -61,7 +61,7 @@ jobs:
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
 
   bad-input:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     name: with bad inputs
     runs-on: ubuntu-latest
     steps:
