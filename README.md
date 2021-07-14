@@ -54,7 +54,8 @@ steps:
   for the services or configurations you want to deploy. If not given, defaults
   to app.yaml in the current directory. If that is not found, attempts to
   automatically generate necessary configuration files (such as app.yaml) in
-  the current directory (example, `app.yaml cron.yaml`).
+  the current directory (example, `app.yaml cron.yaml`). Note: the additional
+  deliverables may require additional roles for your service account user.
 
 - `image_url`: (Optional) Deploy with a specific container image. The image url
   must be from one of the valid GCR hostnames (example, `gcr.io/`).
@@ -87,6 +88,7 @@ permissions to access the secrets being requested.
 - Service Account User (`roles/iam.serviceAccountUser`): to deploy as the service account
 - Storage Admin (`roles/compute.storageAdmin`): to upload files
 - Cloud Build Editor (`cloudbuild.builds.editor`): to build the application
+- _(optional)_ Cloud Scheduler Admin (`roles/cloudscheduler.admin`): to schedule tasks
 
 *Note:* An owner will be needed to create the App Engine application
 
@@ -152,15 +154,7 @@ Credentials.
 
 1.  [Create a Google Cloud service account][sa] or select an existing one.
 
-1.  Add the the following [Cloud IAM roles][roles] to your service account:
-
-    - `App Engine Admin` - allows for the creation of new App Engine apps
-
-    - `Service Account User` -  required to deploy to App Engine as service account
-
-    - `Storage Admin` - allows upload of source code
-
-    - `Cloud Build Editor` - allows building of source code
+1.  Add [required roles](#authorization) to [your service account][roles].
 
 1.  [Download a JSON service account key][create-key] for the service account.
 
