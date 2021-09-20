@@ -39,7 +39,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.1",
     "@types/sinon": "^10.0.2",
-    "@typescript-eslint/eslint-plugin": "^4.31.0",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.0",
     "@zeit/ncc": "^0.22.0",
     "chai": "^4.2.x",
