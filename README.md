@@ -65,7 +65,7 @@ steps:
   you.
 
 - `promote`: (Optional) Promote the deployed version to receive all traffic. 
-  Possible values: ''|'true'|true|'false'|false, if not specified behavior defaults to promote.
+  Possible values: `''|'true'|true|'false'|false`, if not specified behavior defaults to promote.
 
 ### app.yaml customizations
 
