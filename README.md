@@ -65,7 +65,7 @@ steps:
   you.
 
 - `promote`: (Optional) Promote the deployed version to receive all traffic. 
-  Possible values: ''|'true'|true|'false'|false, if not specified behavior defaults to promote.
+  Possible values: `''|'true'|true|'false'|false`, if not specified behavior defaults to promote.
 
 ### app.yaml customizations
 
@@ -87,7 +87,7 @@ permissions to access the secrets being requested.
 - App Engine Admin (`roles/appengine.appAdmin`): can manage all App Engine resources
 - Service Account User (`roles/iam.serviceAccountUser`): to deploy as the service account
 - Storage Admin (`roles/compute.storageAdmin`): to upload files
-- Cloud Build Editor (`cloudbuild.builds.editor`): to build the application
+- Cloud Build Editor (`roles/cloudbuild.builds.editor`): to build the application
 - _(optional)_ Cloud Scheduler Admin (`roles/cloudscheduler.admin`): to schedule tasks
 
 *Note:* An owner will be needed to create the App Engine application
