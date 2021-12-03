@@ -16,7 +16,16 @@
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
-import * as setupGcloud from '../setupGcloudSDK/src/';
+import {
+  getLatestGcloudSDKVersion,
+  isInstalled as isGcloudSDKInstalled,
+  installGcloudSDK,
+  isProjectIdSet,
+  authenticateGcloudSDK,
+  setProjectWithKey,
+  isAuthenticated,
+  getToolCommand,
+} from '@google-github-actions/setup-cloud-sdk';
 import fs from 'fs';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
@@ -74,13 +83,13 @@ export async function run(): Promise<void> {
     }
 
     // Install gcloud if not already installed.
-    if (!setupGcloud.isInstalled()) {
-      const gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
-      await setupGcloud.installGcloudSDK(gcloudVersion);
+    if (!isGcloudSDKInstalled()) {
+      const gcloudVersion = await getLatestGcloudSDKVersion();
+      await installGcloudSDK(gcloudVersion);
     }
 
     // Fail if no Project Id is provided if not already set.
-    const projectIdSet = await setupGcloud.isProjectIdSet();
+    const projectIdSet = await isProjectIdSet();
     if (!projectIdSet && projectId === '' && serviceAccountKey === '') {
       throw new Error(
         'No project Id provided. Ensure you have either project_id and/or credentials inputs are set.',
@@ -89,18 +98,18 @@ export async function run(): Promise<void> {
 
     // Authenticate gcloud SDK.
     if (serviceAccountKey) {
-      await setupGcloud.authenticateGcloudSDK(serviceAccountKey);
+      await authenticateGcloudSDK(serviceAccountKey);
       // Set and retrieve Project Id if not provided
       if (projectId === '') {
-        projectId = await setupGcloud.setProjectWithKey(serviceAccountKey);
+        projectId = await setProjectWithKey(serviceAccountKey);
       }
     }
-    const authenticated = await setupGcloud.isAuthenticated();
+    const authenticated = await isAuthenticated();
     if (!authenticated) {
       throw new Error('Error authenticating the Cloud SDK.');
     }
 
-    const toolCommand = setupGcloud.getToolCommand();
+    const toolCommand = getToolCommand();
 
     // Create app engine gcloud cmd.
     let appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
