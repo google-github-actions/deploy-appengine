@@ -33,11 +33,6 @@ jobs:
         });
         server.listen(process.env.PORT || 8080);
         EOF
-    - name: Build dependency
-      working-directory: setupGcloudSDK
-      run: |-
-        npm install
-        npm run build
     - id: build
       name: Build dist
       run: |-
@@ -73,11 +68,6 @@ jobs:
     - uses: actions/setup-node@master
       with:
         node-version: 12.x
-    - name: Build dependency
-      working-directory: setupGcloudSDK
-      run: |-
-        npm install
-        npm run build
     - id: build
       name: Build dist
       run: |-
