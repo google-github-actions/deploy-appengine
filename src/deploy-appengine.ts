@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
-import * as core from '@actions/core';
-import * as exec from '@actions/exec';
-import * as setupGcloud from '../setupGcloudSDK/src/';
+import {
+  getInput,
+  exportVariable,
+  info as logInfo,
+  warning as logWarning,
+  setFailed,
+  setOutput,
+} from '@actions/core';
+import { exec } from '@actions/exec';
+import {
+  getLatestGcloudSDKVersion,
+  isInstalled as isGcloudSDKInstalled,
+  installGcloudSDK,
+  isProjectIdSet,
+  authenticateGcloudSDK,
+  setProjectWithKey,
+  isAuthenticated,
+  getToolCommand,
+} from '@google-github-actions/setup-cloud-sdk';
 import fs from 'fs';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
@@ -27,12 +43,12 @@ export function setUrlOutput(output: string): string | undefined {
   const urlMatch = output.match(/(?<=target url:\s+\[)(.*?)(?=\])/g);
   //(?<=is \()(.*?)(?=\s*\))
   if (!urlMatch) {
-    core.warning('Can not find URL.');
+    logWarning('Can not find URL.');
     return undefined;
   }
   // Match "tagged" URL or default to service URL
   const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
-  core.setOutput('url', url);
+  setOutput('url', url);
   return url;
 }
 
@@ -45,17 +61,17 @@ export function parseFlags(flags: string): RegExpMatchArray {
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
-  core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
+  exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
     // Get action inputs.
-    let projectId = core.getInput('project_id');
-    const cwd = core.getInput('working_directory');
-    const deliverables = core.getInput('deliverables');
-    const imageUrl = core.getInput('image_url');
-    const version = core.getInput('version');
-    const promote = core.getInput('promote');
-    const serviceAccountKey = core.getInput('credentials');
-    const flags = core.getInput('flags');
+    let projectId = getInput('project_id');
+    const cwd = getInput('working_directory');
+    const deliverables = getInput('deliverables');
+    const imageUrl = getInput('image_url');
+    const version = getInput('version');
+    const promote = getInput('promote');
+    const serviceAccountKey = getInput('credentials');
+    const flags = getInput('flags');
 
     // Change working directory
     if (cwd) process.chdir(cwd.trim());
@@ -65,22 +81,21 @@ export async function run(): Promise<void> {
     if (allDeliverables[0] == '') allDeliverables[0] = 'app.yaml';
     for (const deliverable of allDeliverables) {
       if (!fs.existsSync(deliverable)) {
-        core.error(deliverable + ' is not in path.');
         const message =
-          'Deliverables can not be found. ' +
+          `Deliverable ${deliverable} can not be found. ` +
           'Check `working_directory` and `deliverables` input paths.';
         throw new Error(message);
       }
     }
 
     // Install gcloud if not already installed.
-    if (!setupGcloud.isInstalled()) {
-      const gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
-      await setupGcloud.installGcloudSDK(gcloudVersion);
+    if (!isGcloudSDKInstalled()) {
+      const gcloudVersion = await getLatestGcloudSDKVersion();
+      await installGcloudSDK(gcloudVersion);
     }
 
     // Fail if no Project Id is provided if not already set.
-    const projectIdSet = await setupGcloud.isProjectIdSet();
+    const projectIdSet = await isProjectIdSet();
     if (!projectIdSet && projectId === '' && serviceAccountKey === '') {
       throw new Error(
         'No project Id provided. Ensure you have either project_id and/or credentials inputs are set.',
@@ -89,18 +104,18 @@ export async function run(): Promise<void> {
 
     // Authenticate gcloud SDK.
     if (serviceAccountKey) {
-      await setupGcloud.authenticateGcloudSDK(serviceAccountKey);
+      await authenticateGcloudSDK(serviceAccountKey);
       // Set and retrieve Project Id if not provided
       if (projectId === '') {
-        projectId = await setupGcloud.setProjectWithKey(serviceAccountKey);
+        projectId = await setProjectWithKey(serviceAccountKey);
       }
     }
-    const authenticated = await setupGcloud.isAuthenticated();
+    const authenticated = await isAuthenticated();
     if (!authenticated) {
       throw new Error('Error authenticating the Cloud SDK.');
     }
 
-    const toolCommand = setupGcloud.getToolCommand();
+    const toolCommand = getToolCommand();
 
     // Create app engine gcloud cmd.
     let appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
@@ -144,10 +159,10 @@ export async function run(): Promise<void> {
       },
       silent: true,
     };
-    core.info(`running: ${toolCommand} ${appDeployCmd.join(' ')}`);
+    logInfo(`running: ${toolCommand} ${appDeployCmd.join(' ')}`);
     // Run gcloud cmd.
     try {
-      await exec.exec(toolCommand, appDeployCmd, options);
+      await exec(toolCommand, appDeployCmd, options);
       // Set url as output.
       setUrlOutput(output + errOutput);
     } catch (error) {
@@ -158,6 +173,7 @@ export async function run(): Promise<void> {
       }
     }
   } catch (error) {
-    core.setFailed(error.message);
+    const msg = error instanceof Error ? error.message : error;
+    setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   }
 }
