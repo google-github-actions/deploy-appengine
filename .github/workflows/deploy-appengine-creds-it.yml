@@ -173,3 +173,57 @@ jobs:
     - name: Clean Up
       if: ${{ always() }}
       run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+
+  wif:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
+    name: with wif creds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Update app.yaml
+      run: |-
+        echo "service: ${{ github.job }}-${{ github.run_number }}" >> ${{ github.workspace }}/example-app/app.yaml
+
+    - uses: 'actions/setup-node@v2'
+      with:
+        node-version: '12.x'
+
+    - id: build
+      name: Build dist
+      run: |-
+        npm ci
+        npm run build
+
+    - id: auth
+      uses: google-github-actions/auth@main
+      with:
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+        service_account: ${{ secrets.APPENGINE_DEPLOY_SA_EMAIL }}
+
+    - id: deploy
+      name: Deploy to App Engine
+      uses: ./
+      with:
+        version: json
+        promote: false # Allows for deletion
+        working_directory: ${{ github.workspace }}/example-app/
+
+    - name: Test Output
+      run: |-
+        curl '${{ steps.deploy.outputs.url }}' \
+          --silent \
+          --fail \
+          --location \
+          --retry 5 \
+          --retry-connrefused \
+          --retry-delay 5 \
+          --retry-max-time 300
+
+    - name: Clean Up
+      if: ${{ always() }}
+      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet

@@ -31,10 +31,14 @@ App Engine Application. See the [Authorization](#authorization) section below fo
 
 ```yaml
 steps:
-- id: deploy
-  uses: google-github-actions/deploy-appengine@main
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
-    credentials: ${{ secrets.gcp_credentials }}
+    workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+    service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+
+- id: deploy
+  uses: google-github-actions/deploy-appengine@v0.4.0
 
 # Example of using the output
 - id: test
@@ -67,6 +71,8 @@ steps:
 - `promote`: (Optional) Promote the deployed version to receive all traffic. 
   Possible values: `''|'true'|true|'false'|false`, if not specified behavior defaults to promote.
 
+- `credentials`: (**Deprecated**) This input is deprecated. See [auth section](https://github.com/google-github-actions/deploy-appengine#authorization) for more details. Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.
+
 ### app.yaml customizations
 
 Other application configurations can be customized through the app.yaml, ie the
@@ -78,9 +84,12 @@ for more information.
 - `url`: The URL of your App Engine Application.
 
 ## Authorization
-<a name="authorization"></a>
-There are a few ways to authenticate this action. The caller must have
-permissions to access the secrets being requested.
+
+### Via google-github-actions/auth
+
+Use [google-github-actions/auth](https://github.com/google-github-actions/auth) to authenticate the action. This Action supports both the recommended [Workload Identity Federation][wif] based authentication and the traditional [Service Account Key JSON][sa] based auth.
+
+See [usage](https://github.com/google-github-actions/auth#usage) for more details.
 
 [Roles needed](https://cloud.google.com/appengine/docs/standard/python/roles#predefined_roles):
 
@@ -92,35 +101,29 @@ permissions to access the secrets being requested.
 
 *Note:* An owner will be needed to create the App Engine application
 
-### Used with setup-gcloud
-
-You can provide credentials using the [setup-gcloud][setup-gcloud] action,
-however you must provide your Project ID to the `deploy-appengine` action:
+#### Authenticating via Workload Identity Federation
 
 ```yaml
-- uses: google-github-actions/setup-gcloud@master
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
-    version: '290.0.1'
-    service_account_key: ${{ secrets.GCP_SA_KEY }}
-    export_default_credentials: true
+    workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+    service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+
 - id: Deploy
-  uses: google-github-actions/deploy-appengine@main
-  with:
-    project_id: ${{ secrets.project_id }}
+  uses: google-github-actions/deploy-appengine@v0.4.0
 ```
 
-### Via Credentials
-
-You can provide [Google Cloud Service Account JSON][sa] directly to the action
-by specifying the `credentials` input. First, create a [GitHub
-Secret][gh-secret] that contains the JSON content, then import it into the
-action:
+#### Authenticating via Service Account Key JSON
 
 ```yaml
-- id: Deploy
-  uses: google-github-actions/deploy-appengine@main
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
-    credentials: ${{ secrets.GCP_SA_KEY }}
+    credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+- id: Deploy
+  uses: google-github-actions/deploy-appengine@v0.4.0
 ```
 
 ### Via Application Default Credentials
@@ -132,11 +135,8 @@ only works using a custom runner hosted on GCP.**
 
 ```yaml
 - id: Deploy
-  uses: google-github-actions/deploy-appengine@main
+  uses: google-github-actions/deploy-appengine@v0.4.0
 ```
-
-The action will automatically detect and use the Application Default
-Credentials.
 
 ## Example Workflows
 
@@ -191,12 +191,15 @@ Example using `setup-gcloud`:
 Migrated to `deploy-appengine`:
 
 ```YAML
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
+  with:
+    credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
 - name: Deploy to App Engine
   uses: google-github-actions/deploy-appengine@v0.2.0
   with:
     deliverables: app.yaml
-    project_id: ${{ secrets.GCP_PROJECT }}
-    credentials: ${{ secrets.GCP_SA_KEY }}
     promote: false
     version: v1
 ```
@@ -204,6 +207,7 @@ Migrated to `deploy-appengine`:
 [gae]: https://cloud.google.com/appengine
 [sm]: https://cloud.google.com/secret-manager
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
+[wif]: https://cloud.google.com/iam/docs/workload-identity-federation
 [gh-runners]: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
 [gh-secret]: https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
 [setup-gcloud]: https://github.com/google-github-actions/setup-gcloud/

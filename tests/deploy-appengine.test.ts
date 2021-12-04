@@ -71,6 +71,7 @@ describe('#run', function () {
   });
   it('authenticates if key is provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
+    this.stubs.isProjectIdSet.withArgs().returns(true);
     await run();
     expect(this.stubs.authenticateGcloudSDK.withArgs('key').callCount).to.eq(1);
   });

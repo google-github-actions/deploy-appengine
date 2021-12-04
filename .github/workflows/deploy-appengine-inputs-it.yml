@@ -84,6 +84,10 @@ jobs:
     - name: Catch failure
       run: |-
         if [ ${{ steps.test2.outcome }} != 'failure' ]; then exit 1; fi
+
+    # unset project id set by previous deploy 
+    - run: |-
+        gcloud config unset project
     
     - uses: google-github-actions/setup-gcloud@master
       with:
