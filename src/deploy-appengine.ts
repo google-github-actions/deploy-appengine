@@ -28,6 +28,7 @@ import {
   isInstalled as isGcloudSDKInstalled,
   installGcloudSDK,
   isProjectIdSet,
+  setProject,
   authenticateGcloudSDK,
   setProjectWithKey,
   isAuthenticated,
@@ -73,6 +74,15 @@ export async function run(): Promise<void> {
     const serviceAccountKey = getInput('credentials');
     const flags = getInput('flags');
 
+    // Add warning if using credentials
+    if (serviceAccountKey) {
+      logWarning(
+        '"credentials" input has been deprecated. ' +
+          'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
+          'For more details, see https://github.com/google-github-actions/deploy-appengine#authorization',
+      );
+    }
+
     // Change working directory
     if (cwd) process.chdir(cwd.trim());
 
@@ -94,21 +104,25 @@ export async function run(): Promise<void> {
       await installGcloudSDK(gcloudVersion);
     }
 
+    // set PROJECT ID
+    if (projectId) {
+      await setProject(projectId);
+    } else if (serviceAccountKey) {
+      projectId = await setProjectWithKey(serviceAccountKey);
+    } else if (process.env.GCLOUD_PROJECT) {
+      await setProject(process.env.GCLOUD_PROJECT);
+    }
     // Fail if no Project Id is provided if not already set.
     const projectIdSet = await isProjectIdSet();
-    if (!projectIdSet && projectId === '' && serviceAccountKey === '') {
+    if (!projectIdSet) {
       throw new Error(
         'No project Id provided. Ensure you have either project_id and/or credentials inputs are set.',
       );
     }
 
-    // Authenticate gcloud SDK.
-    if (serviceAccountKey) {
+    // Either serviceAccountKey or GOOGLE_GHA_CREDS_PATH env var required
+    if (serviceAccountKey || process.env.GOOGLE_GHA_CREDS_PATH) {
       await authenticateGcloudSDK(serviceAccountKey);
-      // Set and retrieve Project Id if not provided
-      if (projectId === '') {
-        projectId = await setProjectWithKey(serviceAccountKey);
-      }
     }
     const authenticated = await isAuthenticated();
     if (!authenticated) {
