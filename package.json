@@ -36,13 +36,13 @@
     "@typescript-eslint/parser": "^4.33.0",
     "@zeit/ncc": "^0.22.0",
     "chai": "^4.2.x",
-    "eslint": "^7.32.0",
+    "eslint": "^8.4.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.x",
     "mocha": "^9.1.3",
     "prettier": "^2.4.1",
     "sinon": "^11.1.2",
-    "ts-node": "^10.2.1",
+    "ts-node": "^10.4.0",
     "typescript": "^4.3.5"
   }
 }
