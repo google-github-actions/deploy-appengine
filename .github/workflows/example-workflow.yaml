@@ -12,27 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+name: 'examples'
+
 on:
   push:
     branches:
-      - example
-
-name: Deploy to Google App Engine
+    - 'example'
+  pull_request:
+    branches:
+    - 'example'
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - uses: 'actions/checkout@v2'
 
-      - name: Deploy to App Engine
-        id: deploy
-        uses: google-github-actions/deploy-appengine@v0.2.0
-        with:
-          deliverables: example-app/app.yaml
-          project_id: ${{ secrets.GCP_PROJECT }}
-          credentials: ${{ secrets.GCP_SA_KEY }}
+    - uses: 'google-github-actions/auth@main'
+      with:
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.APPENGINE_DEPLOY_SA_EMAIL }}'
 
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+    - id: 'deploy'
+      name: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v0.2.0'
+      with:
+        deliverables: 'example-app/app.yaml'
+        project_id: '${{ secrets.GCP_PROJECT }}'
+
+    - name: 'show output'
+      run: 'echo ${{ steps.deploy.outputs.url }}'

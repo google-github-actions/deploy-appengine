@@ -45,9 +45,7 @@ describe('#run', function () {
       setFailed: sinon.stub(core, 'setFailed'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-      isAuthenticated: sinon
-        .stub(setupGcloud, 'isAuthenticated')
-        .resolves(true),
+      isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
       setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
