@@ -48,13 +48,13 @@ export function setUrlOutput(output: string): string | undefined {
     return undefined;
   }
   // Match "tagged" URL or default to service URL
-  const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
+  const url = urlMatch.length > 1 ? urlMatch[1] : urlMatch[0];
   setOutput('url', url);
   return url;
 }
 
-export function parseFlags(flags: string): RegExpMatchArray {
-  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
+export function parseFlags(flags: string): RegExpMatchArray | null {
+  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g); // Split on space or "=" if not in quotes
 }
 
 /**
@@ -179,15 +179,12 @@ export async function run(): Promise<void> {
       await exec(toolCommand, appDeployCmd, options);
       // Set url as output.
       setUrlOutput(output + errOutput);
-    } catch (error) {
-      if (errOutput) {
-        throw new Error(errOutput);
-      } else {
-        throw new Error(error);
-      }
+    } catch (err) {
+      const msg = errOutput || (err instanceof Error ? err.message : `${err}`);
+      throw new Error(msg);
     }
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : error;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : err;
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   }
 }
