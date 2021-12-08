@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.4.0...v0.5.0) (2021-12-07)
+
+
+### Features
+
+* add WIF support ([#169](https://www.github.com/google-github-actions/deploy-appengine/issues/169)) ([9561d12](https://www.github.com/google-github-actions/deploy-appengine/commit/9561d1239a5f8208fc7614c9ff350ca787b61211))
+
 ## [0.4.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.3.1...v0.4.0) (2021-06-04)
 
 
