@@ -24,18 +24,22 @@ on:
 
 jobs:
   deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     runs-on: 'ubuntu-latest'
     steps:
     - uses: 'actions/checkout@v2'
 
-    - uses: 'google-github-actions/auth@main'
+    - uses: 'google-github-actions/auth@v0'
       with:
         workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
         service_account: '${{ secrets.APPENGINE_DEPLOY_SA_EMAIL }}'
 
     - id: 'deploy'
       name: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0.2.0'
+      uses: 'google-github-actions/deploy-appengine@v0.5.0'
       with:
         deliverables: 'example-app/app.yaml'
         project_id: '${{ secrets.GCP_PROJECT }}'
