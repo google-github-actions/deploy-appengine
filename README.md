@@ -30,19 +30,25 @@ App Engine Application. See the [Authorization](#authorization) section below fo
 ## Usage
 
 ```yaml
-steps:
-- id: 'auth'
-  uses: 'google-github-actions/auth@v0.4.0'
-  with:
-    workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-    service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+jobs:
+  job_id:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
-- id: deploy
-  uses: google-github-actions/deploy-appengine@v0.4.0
+    steps:
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-# Example of using the output
-- id: test
-  run: curl "${{ steps.deploy.outputs.url }}"
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v0.5.0'
+
+    # Example of using the output
+    - id: 'test'
+      run: 'curl "${{ steps.deploy.outputs.url }}"'
 ```
 
 ## Inputs
@@ -51,7 +57,7 @@ steps:
   will override the project configured by gcloud.
 
 - `working_directory`: (Optional) The working directory to use. **Actions do not honor
-  [default working-directory settings](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrun).** The `deliverables` input is a 
+  [default working-directory settings](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrun).** The `deliverables` input is a
   relative path based on this setting.
 
 - `deliverables`: (Optional) The [yaml files](https://cloud.google.com/appengine/docs/standard/nodejs/configuration-files#optional_configuration_files)
@@ -68,7 +74,7 @@ steps:
   by this deployment. If you do not specify a version, one will be generated for
   you.
 
-- `promote`: (Optional) Promote the deployed version to receive all traffic. 
+- `promote`: (Optional) Promote the deployed version to receive all traffic.
   Possible values: `''|'true'|true|'false'|false`, if not specified behavior defaults to promote.
 
 - `credentials`: (**Deprecated**) This input is deprecated. See [auth section](https://github.com/google-github-actions/deploy-appengine#authorization) for more details. Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.
@@ -104,26 +110,36 @@ See [usage](https://github.com/google-github-actions/auth#usage) for more detail
 #### Authenticating via Workload Identity Federation
 
 ```yaml
-- id: 'auth'
-  uses: 'google-github-actions/auth@v0.4.0'
-  with:
-    workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-    service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+jobs:
+  job_id:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
-- id: Deploy
-  uses: google-github-actions/deploy-appengine@v0.4.0
+    steps:
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v0.5.0'
 ```
 
 #### Authenticating via Service Account Key JSON
 
 ```yaml
-- id: 'auth'
-  uses: 'google-github-actions/auth@v0.4.0'
-  with:
-    credentials_json: '${{ secrets.GCP_SA_KEY }}'
+jobs:
+  job_id:
+    steps:
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-- id: Deploy
-  uses: google-github-actions/deploy-appengine@v0.4.0
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v0.5.0'
 ```
 
 ### Via Application Default Credentials
@@ -134,8 +150,11 @@ authenticate requests as the service account attached to the instance. **This
 only works using a custom runner hosted on GCP.**
 
 ```yaml
-- id: Deploy
-  uses: google-github-actions/deploy-appengine@v0.4.0
+jobs:
+  job_id:
+    steps:
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v0.5.0'
 ```
 
 ## Example Workflows
@@ -192,7 +211,7 @@ Migrated to `deploy-appengine`:
 
 ```YAML
 - id: 'auth'
-  uses: 'google-github-actions/auth@v0.4.0'
+  uses: 'google-github-actions/auth@v0'
   with:
     credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
