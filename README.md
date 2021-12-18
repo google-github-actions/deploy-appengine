@@ -44,7 +44,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0.5.0'
+      uses: 'google-github-actions/deploy-appengine@v0'
 
     # Example of using the output
     - id: 'test'
@@ -124,7 +124,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0.5.0'
+      uses: 'google-github-actions/deploy-appengine@v0'
 ```
 
 #### Authenticating via Service Account Key JSON
@@ -139,7 +139,7 @@ jobs:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0.5.0'
+      uses: 'google-github-actions/deploy-appengine@v0'
 ```
 
 ### Via Application Default Credentials
@@ -154,7 +154,7 @@ jobs:
   job_id:
     steps:
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0.5.0'
+      uses: 'google-github-actions/deploy-appengine@v0'
 ```
 
 ## Example Workflows
@@ -196,14 +196,14 @@ git push YOUR-FORK main:example
 Example using `setup-gcloud`:
 
 ```YAML
-- name: Setup Cloud SDK
-  uses: google-github-actions/setup-gcloud@v0.2.0
+- name: 'Setup Cloud SDK'
+  uses: 'google-github-actions/setup-gcloud@v0'
   with:
-    project_id: ${{ env.PROJECT_ID }}
-    service_account_key: ${{ secrets.GCP_SA_KEY }}
+    project_id: '${{ env.PROJECT_ID }}'
+    service_account_key: '${{ secrets.GCP_SA_KEY }}'
 
-- name: Deploy to App Engine
-  run: gcloud app deploy app.yaml --quiet --no-promote --version v1
+- name: 'Deploy to App Engine'
+  run: 'gcloud app deploy app.yaml --quiet --no-promote --version v1'
 
 ```
 
@@ -215,12 +215,12 @@ Migrated to `deploy-appengine`:
   with:
     credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-- name: Deploy to App Engine
-  uses: google-github-actions/deploy-appengine@v0.2.0
+- name: 'Deploy to App Engine'
+  uses: 'google-github-actions/deploy-appengine@v0'
   with:
-    deliverables: app.yaml
+    deliverables: 'app.yaml'
     promote: false
-    version: v1
+    version: 'v1'
 ```
 
 [gae]: https://cloud.google.com/appengine
