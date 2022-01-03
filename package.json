@@ -33,7 +33,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.12",
     "@types/sinon": "^10.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
     "@typescript-eslint/parser": "^5.7.0",
     "@vercel/ncc": "^0.33.0",
     "chai": "^4.3.x",
