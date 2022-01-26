@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import {
   getInput,
   exportVariable,
@@ -22,7 +24,8 @@ import {
   setFailed,
   setOutput,
 } from '@actions/core';
-import { exec } from '@actions/exec';
+import { getExecOutput } from '@actions/exec';
+
 import {
   getLatestGcloudSDKVersion,
   isInstalled as isGcloudSDKInstalled,
@@ -34,7 +37,6 @@ import {
   isAuthenticated,
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
-import fs from 'fs';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
@@ -156,33 +158,20 @@ export async function run(): Promise<void> {
       if (flagList) appDeployCmd = appDeployCmd.concat(flagList);
     }
 
-    // Get output of gcloud cmd.
-    let output = '';
-    const stdout = (data: Buffer): void => {
-      output += data.toString();
-    };
-    let errOutput = '';
-    const stderr = (data: Buffer): void => {
-      errOutput += data.toString();
-    };
+    const options = { silent: true };
+    const commandString = `${toolCommand} ${appDeployCmd.join(' ')}`;
+    logInfo(`Running: ${commandString}`);
 
-    const options = {
-      listeners: {
-        stderr,
-        stdout,
-      },
-      silent: true,
-    };
-    logInfo(`running: ${toolCommand} ${appDeployCmd.join(' ')}`);
-    // Run gcloud cmd.
-    try {
-      await exec(toolCommand, appDeployCmd, options);
-      // Set url as output.
-      setUrlOutput(output + errOutput);
-    } catch (err) {
-      const msg = errOutput || (err instanceof Error ? err.message : `${err}`);
-      throw new Error(msg);
+    // Get output of gcloud cmd.
+    const output = await getExecOutput(toolCommand, appDeployCmd, options);
+    if (output.exitCode !== 0) {
+      const errMsg = output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
     }
+
+    // Set url as output.
+    // TODO: update this to use JSON or YAML machine-readable output instead.
+    setUrlOutput(output.stdout + output.stderr);
   } catch (err) {
     const msg = err instanceof Error ? err.message : err;
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
