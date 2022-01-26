@@ -50,7 +50,7 @@ describe('#run', function () {
       isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
-      setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
+      parseServiceAccountKey: sinon.stub(setupGcloud, 'parseServiceAccountKey'),
       isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(false),
       getExecOutput: sinon.stub(exec, 'getExecOutput'),
     };
@@ -80,7 +80,7 @@ describe('#run', function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
     this.stubs.getInput.withArgs('project_id').returns('');
     await run();
-    expect(this.stubs.setProjectWithKey.withArgs('key').callCount).to.eq(1);
+    expect(this.stubs.parseServiceAccountKey.withArgs('key').callCount).to.eq(1);
   });
   it('fails if credentials and project_id are not provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('');
@@ -137,15 +137,15 @@ describe('#setUrlOutput', function () {
     target url:      [https://PROJECT_ID.uc.r.appspot.com]
 
 
-    Do you want to continue (Y/n)?  
+    Do you want to continue (Y/n)?
 
     Beginning deployment of service [default]...
     ╔════════════════════════════════════════════════════════════╗
     ╠═ Uploading 6 files to Google Cloud Storage                ═╣
     ╚════════════════════════════════════════════════════════════╝
     File upload done.
-    Updating service [default]...done.                                                                                                    
-    Setting traffic split for service [default]...done.                                                                                   
+    Updating service [default]...done.
+    Setting traffic split for service [default]...done.
     Deployed service [default] to [https://PROJECT_ID.uc.r.appspot.com]
 
     You can stream logs from the command line by running:
@@ -170,15 +170,15 @@ describe('#setUrlOutput', function () {
     target url:      [https://service-v2-dot-PROJECT_ID.uc.r.appspot.com]
 
 
-    Do you want to continue (Y/n)?  
+    Do you want to continue (Y/n)?
 
     Beginning deployment of service [service-v2]...
     ╔════════════════════════════════════════════════════════════╗
     ╠═ Uploading 1 file to Google Cloud Storage                 ═╣
     ╚════════════════════════════════════════════════════════════╝
     File upload done.
-    Updating service [service-v2]...done.                                                                                                 
-    Setting traffic split for service [service-v2]...done.                                                                                
+    Updating service [service-v2]...done.
+    Setting traffic split for service [service-v2]...done.
     Deployed service [service-v2] to [https://service-v2-dot-PROJECT_ID.uc.r.appspot.com]
 
     You can stream logs from the command line by running:

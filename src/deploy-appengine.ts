@@ -30,10 +30,8 @@ import {
   getLatestGcloudSDKVersion,
   isInstalled as isGcloudSDKInstalled,
   installGcloudSDK,
-  isProjectIdSet,
-  setProject,
+  parseServiceAccountKey,
   authenticateGcloudSDK,
-  setProjectWithKey,
   isAuthenticated,
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
@@ -73,13 +71,13 @@ export async function run(): Promise<void> {
     const imageUrl = getInput('image_url');
     const version = getInput('version');
     const promote = getInput('promote');
-    const serviceAccountKey = getInput('credentials');
+    const credentials = getInput('credentials');
     const flags = getInput('flags');
 
     // Add warning if using credentials
-    if (serviceAccountKey) {
+    if (credentials) {
       logWarning(
-        '"credentials" input has been deprecated. ' +
+        'The "credentials" input is deprecated. ' +
           'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
           'For more details, see https://github.com/google-github-actions/deploy-appengine#authorization',
       );
@@ -106,29 +104,25 @@ export async function run(): Promise<void> {
       await installGcloudSDK(gcloudVersion);
     }
 
-    // set PROJECT ID
-    if (projectId) {
-      await setProject(projectId);
-    } else if (serviceAccountKey) {
-      projectId = await setProjectWithKey(serviceAccountKey);
-    } else if (process.env.GCLOUD_PROJECT) {
-      await setProject(process.env.GCLOUD_PROJECT);
-    }
-    // Fail if no Project Id is provided if not already set.
-    const projectIdSet = await isProjectIdSet();
-    if (!projectIdSet) {
-      throw new Error(
-        'No project Id provided. Ensure you have either project_id and/or credentials inputs are set.',
-      );
-    }
-
-    // Either serviceAccountKey or GOOGLE_GHA_CREDS_PATH env var required
-    if (serviceAccountKey || process.env.GOOGLE_GHA_CREDS_PATH) {
-      await authenticateGcloudSDK(serviceAccountKey);
+    // Either credentials or GOOGLE_GHA_CREDS_PATH env var required
+    if (credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
+      await authenticateGcloudSDK(credentials);
     }
     const authenticated = await isAuthenticated();
     if (!authenticated) {
       throw new Error('Error authenticating the Cloud SDK.');
+    }
+
+    // set PROJECT ID
+    if (!projectId) {
+      if (credentials) {
+        logInfo(`Extracting project ID from service account key`);
+        const key = parseServiceAccountKey(credentials);
+        projectId = key.project_id;
+      } else if (process.env.GCLOUD_PROJECT) {
+        logInfo(`Extracting project ID $GCLOUD_PROJECT`);
+        projectId = process.env.GCLOUD_PROJECT;
+      }
     }
 
     const toolCommand = getToolCommand();

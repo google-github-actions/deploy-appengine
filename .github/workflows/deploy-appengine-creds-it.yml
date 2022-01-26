@@ -49,7 +49,10 @@ jobs:
 
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
 
   gcloud2:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
@@ -93,7 +96,10 @@ jobs:
 
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet --project ${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
 
   b64-json:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
@@ -132,7 +138,10 @@ jobs:
           --retry-max-time 300
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
 
   json:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
@@ -172,7 +181,10 @@ jobs:
 
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
 
   wif:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
@@ -226,4 +238,7 @@ jobs:
 
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"

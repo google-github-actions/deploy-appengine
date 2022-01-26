@@ -5,9 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build -m src/index.ts",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lintfix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write **.ts",
+    "lint": "eslint src/ tests/ --ext .ts,.tsx",
+    "format": "eslint src/ tests/ --ext .ts,.tsx --fix",
     "test": "mocha -r ts-node/register -t 150s 'tests/*.test.ts' --exit"
   },
   "repository": {
