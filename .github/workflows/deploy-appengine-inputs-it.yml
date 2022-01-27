@@ -57,7 +57,10 @@ jobs:
           --retry-max-time 300
     - name: Clean Up
       if: ${{ always() }}
-      run: gcloud app services delete "${{ github.job }}-${{ github.run_number }}" --quiet
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
 
   bad-input:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
@@ -85,10 +88,10 @@ jobs:
       run: |-
         if [ ${{ steps.test2.outcome }} != 'failure' ]; then exit 1; fi
 
-    # unset project id set by previous deploy 
+    # unset project id set by previous deploy
     - run: |-
         gcloud config unset project
-    
+
     - uses: google-github-actions/setup-gcloud@master
       with:
         service_account_key: ${{ secrets.APPENGINE_DEPLOY_SA_KEY_JSON }}
@@ -102,4 +105,3 @@ jobs:
     - name: Catch failure
       run: |-
         if [ ${{ steps.test1.outcome }} != 'failure' ]; then exit 1; fi
-        
