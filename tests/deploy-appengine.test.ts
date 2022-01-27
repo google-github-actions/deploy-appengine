@@ -17,6 +17,7 @@
 import 'mocha';
 import * as sinon from 'sinon';
 import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
 import { run, setUrlOutput, parseFlags } from '../src/deploy-appengine';
@@ -45,11 +46,13 @@ describe('#run', function () {
       setFailed: sinon.stub(core, 'setFailed'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
+      getLatestGcloudSDKVersion: sinon.stub(setupGcloud, 'getLatestGcloudSDKVersion'),
       isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
       setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
       isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(false),
+      getExecOutput: sinon.stub(exec, 'getExecOutput'),
     };
   });
 
