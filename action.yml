@@ -64,7 +64,7 @@ inputs:
   flags:
     description: |-
       Space separated list of other App Engine flags, examples can be found:
-      https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS. Ex 
+      https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS. Ex
       --service-account=my-account@project.iam.gserviceaccount.com --no-cache
     required: false
 
@@ -73,5 +73,5 @@ outputs:
     description: URL of your App Engine Application
 
 runs:
-  using: node12
-  main: dist/index.js
+  using: 'node16'
+  main: 'dist/index.js'

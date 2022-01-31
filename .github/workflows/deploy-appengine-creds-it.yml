@@ -203,7 +203,7 @@ jobs:
 
     - uses: 'actions/setup-node@v2'
       with:
-        node-version: '12.x'
+        node-version: '16.x'
 
     - id: build
       name: Build dist
