@@ -41,7 +41,7 @@
     "eslint-plugin-prettier": "^4.0.x",
     "mocha": "^9.2.0",
     "prettier": "^2.5.1",
-    "sinon": "^12.0.1",
+    "sinon": "^13.0.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.5"
   }
