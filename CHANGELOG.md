@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.5.0...v0.6.0) (2022-01-31)
+
+
+### Features
+
+* use getExecOutput for gcloud commands ([#208](https://www.github.com/google-github-actions/deploy-appengine/issues/208)) ([7a84f16](https://www.github.com/google-github-actions/deploy-appengine/commit/7a84f160eca91610f142e02372d96af4cec204e4))
+
 ## [0.5.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.4.0...v0.5.0) (2021-12-07)
 
 
