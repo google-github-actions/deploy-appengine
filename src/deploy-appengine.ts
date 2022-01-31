@@ -152,7 +152,7 @@ export async function run(): Promise<void> {
       if (flagList) appDeployCmd = appDeployCmd.concat(flagList);
     }
 
-    const options = { silent: true };
+    const options = { silent: true, ignoreReturnCode: true };
     const commandString = `${toolCommand} ${appDeployCmd.join(' ')}`;
     logInfo(`Running: ${commandString}`);
 
