@@ -36,6 +36,8 @@ import {
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
 
+import YAML from 'yaml'
+
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
 
@@ -68,6 +70,7 @@ export async function run(): Promise<void> {
     let projectId = getInput('project_id');
     const cwd = getInput('working_directory');
     const deliverables = getInput('deliverables');
+    const envVariables = getInput('env_variables');
     const imageUrl = getInput('image_url');
     const version = getInput('version');
     const promote = getInput('promote');
@@ -96,6 +99,27 @@ export async function run(): Promise<void> {
           'Check `working_directory` and `deliverables` input paths.';
         throw new Error(message);
       }
+    }
+    
+    // Add environment variables to the yaml
+    for (const deliverable of allDeliverables) {
+      const file = fs.readFileSync(deliverable, 'utf8')
+      const parsedDeliverable = YAML.parse(file)
+
+      const parsedEnvVariablesInput = (envVariables || '').split(',').reduce((acc, cur) => {
+          if (!cur) return acc
+          
+          const [key, value] = cur.split('=');
+          
+          return { ...acc, [key]: value }
+      }, {})
+
+
+      parsedDeliverable.env_variables = { ...parsedDeliverable.env_variables, ...parsedEnvVariablesInput }
+
+      if (!Object.keys(parsedDeliverable.env_variables).length) delete parsedDeliverable.env_variables
+
+      fs.writeFileSync(deliverable, YAML.stringify(parsedDeliverable))
     }
 
     // Install gcloud if not already installed.

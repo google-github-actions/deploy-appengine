@@ -21,6 +21,11 @@ inputs:
   project_id:
     description: The GCP project ID. Overrides project ID set by credentials.
     required: true
+  
+  env_variables:
+    description: |-
+      The environment variables of your project. Variables should be seperated
+      with comma. E.g. VARIABLE_1={{ secrets.value_1 }},VARIABLE_2={{ secrets.value_2 }}
 
   working_directory:
     description: |-
