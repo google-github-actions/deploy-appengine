@@ -37,6 +37,7 @@ import {
 } from '@google-github-actions/setup-cloud-sdk';
 
 import YAML from 'yaml'
+import { parseCSV, writeSecureFile } from '@google-github-actions/actions-utils/dist';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
@@ -106,7 +107,7 @@ export async function run(): Promise<void> {
       const file = fs.readFileSync(deliverable, 'utf8')
       const parsedDeliverable = YAML.parse(file)
 
-      const parsedEnvVariablesInput = (envVariables || '').split(',').reduce((acc, cur) => {
+      const parsedEnvVariablesInput = parseCSV(envVariables || '').reduce((acc, cur) => {
           if (!cur) return acc
           
           const [key, value] = cur.split('=');
@@ -119,7 +120,7 @@ export async function run(): Promise<void> {
 
       if (!Object.keys(parsedDeliverable.env_variables).length) delete parsedDeliverable.env_variables
 
-      fs.writeFileSync(deliverable, YAML.stringify(parsedDeliverable))
+      writeSecureFile(deliverable, YAML.stringify(parsedDeliverable))
     }
 
     // Install gcloud if not already installed.
