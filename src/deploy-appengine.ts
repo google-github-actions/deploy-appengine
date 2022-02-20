@@ -107,7 +107,7 @@ export async function run(): Promise<void> {
       const file = fs.readFileSync(deliverable, 'utf8')
       const parsedDeliverable = YAML.parse(file)
 
-      const parsedEnvVariablesInput = parseCSV(envVariables || '').reduce((acc, cur) => {
+      const parsedEnvVariablesInput = parseCSV(envVariables).reduce((acc, cur) => {
           if (!cur) return acc
           
           const [key, value] = cur.split('=');
