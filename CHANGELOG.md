@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.7.0...v0.8.0) (2022-03-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade to node16 (#243)
+
+### Miscellaneous Chores
+
+* upgrade to node16 ([#243](https://www.github.com/google-github-actions/deploy-appengine/issues/243)) ([5fb3173](https://www.github.com/google-github-actions/deploy-appengine/commit/5fb3173c11f90ad879315db1b4f9232e1112e657))
+
 ## [0.7.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.6.0...v0.7.0) (2022-03-08)
 
 
