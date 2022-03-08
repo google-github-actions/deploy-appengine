@@ -3,13 +3,7 @@
 ## [0.7.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.6.0...v0.7.0) (2022-03-08)
 
 
-### ⚠ BREAKING CHANGES
-
-* require nodejs 16 (#218)
-
-### Miscellaneous Chores
-
-* require nodejs 16 ([#218](https://www.github.com/google-github-actions/deploy-appengine/issues/218)) ([ae37ad0](https://www.github.com/google-github-actions/deploy-appengine/commit/ae37ad06269e52a79e263e085bb3a8a7a34e05b3))
+**:warning: This is the last release that supports Node 12.**
 
 ## [0.6.0](https://www.github.com/google-github-actions/deploy-appengine/compare/v0.5.0...v0.6.0) (2022-01-31)
 
