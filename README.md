@@ -100,7 +100,7 @@ for more information.
 
 Use [google-github-actions/auth](https://github.com/google-github-actions/auth) to authenticate the action. This Action supports both the recommended [Workload Identity Federation][wif] based authentication and the traditional [Service Account Key JSON][sa] based auth.
 
-See [usage](https://github.com/google-github-actions/auth#usage) for more details.
+See [usage](https://github.com/google-github-actions/auth#usage) or [setting up Workload Identity Federation](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation) for more details.
 
 [Roles needed](https://cloud.google.com/appengine/docs/standard/python/roles#predefined_roles):
 
