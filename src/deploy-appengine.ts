@@ -36,6 +36,8 @@ import {
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
 
+import { errorMessage, parseFlags } from '@google-github-actions/actions-utils';
+
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
 
@@ -51,10 +53,6 @@ export function setUrlOutput(output: string): string | undefined {
   const url = urlMatch.length > 1 ? urlMatch[1] : urlMatch[0];
   setOutput('url', url);
   return url;
-}
-
-export function parseFlags(flags: string): RegExpMatchArray | null {
-  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g); // Split on space or "=" if not in quotes
 }
 
 /**
@@ -167,7 +165,7 @@ export async function run(): Promise<void> {
     // TODO: update this to use JSON or YAML machine-readable output instead.
     setUrlOutput(output.stdout + output.stderr);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : err;
+    const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   }
 }

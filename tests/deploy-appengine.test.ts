@@ -20,7 +20,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
-import { run, setUrlOutput, parseFlags } from '../src/deploy-appengine';
+import { run, setUrlOutput } from '../src/deploy-appengine';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -65,62 +65,33 @@ describe('#run', function () {
     await run();
     expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
   });
+
   it('uses the cached gcloud SDK if it was already installed', async function () {
     this.stubs.isInstalled.returns(true);
     await run();
     expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
   });
+
   it('authenticates if key is provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
     this.stubs.isProjectIdSet.withArgs().returns(true);
     await run();
     expect(this.stubs.authenticateGcloudSDK.withArgs('key').callCount).to.eq(1);
   });
+
   it('uses project id from credentials if project_id is not provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
     this.stubs.getInput.withArgs('project_id').returns('');
     await run();
     expect(this.stubs.parseServiceAccountKey.withArgs('key').callCount).to.eq(1);
   });
+
   it('fails if credentials and project_id are not provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('');
     this.stubs.getInput.withArgs('project_id').returns('');
     process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
-  });
-});
-
-describe('#parseFlags', function () {
-  it('parses flags using equals', async function () {
-    const input = '--concurrency=2 --memory=2Gi';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-  });
-  it('parses flags using spaces', async function () {
-    const input = '--concurrency 2 --memory 2Gi';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-  });
-  it('parses flags using combo', async function () {
-    const input = '--concurrency 2 --memory=2Gi';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-  });
-  it('parses flags using space and quotes combo', async function () {
-    const input = '--concurrency 2 --memory="2 Gi"';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--concurrency', '2', '--memory', '"2 Gi"']);
-  });
-  it('parses flags using space and quotes', async function () {
-    const input = '--entry-point "node index.js"';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--entry-point', '"node index.js"']);
-  });
-  it('parses flags using equals and quotes', async function () {
-    const input = '--entry-point="node index.js"';
-    const results = parseFlags(input);
-    expect(results).to.eql(['--entry-point', '"node index.js"']);
   });
 });
 
