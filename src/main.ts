@@ -36,7 +36,12 @@ import {
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
 
-import { errorMessage, parseFlags } from '@google-github-actions/actions-utils';
+import {
+  errorMessage,
+  isPinnedToHead,
+  parseFlags,
+  pinnedToHeadWarning,
+} from '@google-github-actions/actions-utils';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
@@ -60,8 +65,15 @@ export function setUrlOutput(output: string): string | undefined {
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
-  exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
+    // Register metrics
+    exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
+
+    // Warn if pinned to HEAD
+    if (isPinnedToHead()) {
+      logWarning(pinnedToHeadWarning('v0'));
+    }
+
     // Get action inputs.
     let projectId = getInput('project_id');
     const cwd = getInput('working_directory');
@@ -168,4 +180,9 @@ export async function run(): Promise<void> {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   }
+}
+
+// Execute this as the entrypoint when requested.
+if (require.main === module) {
+  run();
 }

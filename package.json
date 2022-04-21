@@ -4,10 +4,10 @@
   "description": "Github Action: Deploy to Google App Engine",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build -m src/index.ts",
+    "build": "ncc build -m src/main.ts",
     "lint": "eslint src/ tests/ --ext .ts,.tsx",
     "format": "eslint src/ tests/ --ext .ts,.tsx --fix",
-    "test": "mocha -r ts-node/register -t 150s 'tests/*.test.ts' --exit"
+    "test": "mocha -r ts-node/register -t 600s 'tests/*.test.ts' --exit"
   },
   "repository": {
     "type": "git",

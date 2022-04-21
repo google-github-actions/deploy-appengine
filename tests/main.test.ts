@@ -15,12 +15,14 @@
  */
 
 import 'mocha';
+import { expect } from 'chai';
 import * as sinon from 'sinon';
+
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
-import { expect } from 'chai';
-import { run, setUrlOutput } from '../src/deploy-appengine';
+
+import { run, setUrlOutput } from '../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -36,6 +38,11 @@ const fakeInputs: { [key: string]: string } = {
 
 function getInputMock(name: string): string {
   return fakeInputs[name];
+}
+
+// Stub somewhat annoying logs
+function doNothing(): void {
+  /** do nothing */
 }
 
 describe('#run', function () {
@@ -54,10 +61,16 @@ describe('#run', function () {
       isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(false),
       getExecOutput: sinon.stub(exec, 'getExecOutput'),
     };
+
+    sinon.stub(core, 'debug').callsFake(doNothing);
+    sinon.stub(core, 'info').callsFake(doNothing);
+    sinon.stub(core, 'warning').callsFake(doNothing);
+    sinon.stub(core, 'setOutput').callsFake(doNothing);
   });
 
   afterEach(function () {
     Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
+    sinon.restore();
   });
 
   it('installs the gcloud SDK if it is not already installed', async function () {
@@ -96,6 +109,17 @@ describe('#run', function () {
 });
 
 describe('#setUrlOutput', function () {
+  beforeEach(() => {
+    sinon.stub(core, 'debug').callsFake(doNothing);
+    sinon.stub(core, 'info').callsFake(doNothing);
+    sinon.stub(core, 'warning').callsFake(doNothing);
+    sinon.stub(core, 'setOutput').callsFake(doNothing);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('correctly parses the URL', function () {
     const output = `
     Services to deploy:
