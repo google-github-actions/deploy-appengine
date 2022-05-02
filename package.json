@@ -40,7 +40,7 @@
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.x",
-    "mocha": "^9.2.2",
+    "mocha": "^10.0.0",
     "prettier": "^2.6.2",
     "sinon": "^13.0.2",
     "ts-node": "^10.7.0",
