@@ -53,6 +53,14 @@ inputs:
       https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS. Ex
       --service-account=my-account@project.iam.gserviceaccount.com --no-cache
     required: false
+  ignoreVerificationFailure:
+    description: |-
+      Handle errors like: "The Node.js binary could not be verified.", The 
+      installation can be forced using the --ignore-verification-failure flag.
+      However, it is strongly recommended that you install a version of Node.js
+      that can be verified.
+    default: "false"
+    required: false
 
 outputs:
   url:

@@ -84,6 +84,11 @@ jobs:
 
 - `credentials`: (**Deprecated**) This input is deprecated. See [auth section](https://github.com/google-github-actions/deploy-appengine#authorization) for more details. Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.
 
+- `ignoreVerificationFailure`: (Optional) Handle errors like: "The Node.js binary could not be verified.", The
+  installation can be forced using the --ignore-verification-failure flag.
+  However, it is strongly recommended that you install a version of Node.js
+  that can be verified.
+
 ### app.yaml customizations
 
 Other application configurations can be customized through the app.yaml, ie the

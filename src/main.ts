@@ -83,6 +83,7 @@ export async function run(): Promise<void> {
     const promote = getInput('promote');
     const credentials = getInput('credentials');
     const flags = getInput('flags');
+    const ignoreVerificationFailure = getInput('ignoreVerificationFailure');
 
     // Add warning if using credentials
     if (credentials) {
@@ -154,6 +155,10 @@ export async function run(): Promise<void> {
       appDeployCmd.push('--promote');
     } else {
       appDeployCmd.push('--no-promote');
+    }
+
+    if (ignoreVerificationFailure === 'true') {
+      appDeployCmd.push('--ignore-verification-failure');
     }
 
     // Add optional flags
