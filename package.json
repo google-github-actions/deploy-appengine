@@ -26,24 +26,24 @@
     "@actions/core": "^1.10.0",
     "@actions/exec": "^1.1.1",
     "@google-github-actions/actions-utils": "^0.4.3",
-    "@google-github-actions/setup-cloud-sdk": "^0.5.2"
+    "@google-github-actions/setup-cloud-sdk": "^1.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.x",
     "@types/mocha": "^10.0.0",
-    "@types/node": "^18.8.5",
+    "@types/node": "^18.11.9",
     "@types/sinon": "^10.0.13",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
+    "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "@typescript-eslint/parser": "^5.43.0",
     "@vercel/ncc": "^0.34.0",
     "chai": "^4.3.x",
-    "eslint": "^8.25.0",
+    "eslint": "^8.27.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.x",
-    "mocha": "^10.0.0",
+    "mocha": "^10.1.0",
     "prettier": "^2.7.1",
-    "sinon": "^14.0.1",
+    "sinon": "^14.0.2",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.4"
+    "typescript": "^4.9.3"
   }
 }

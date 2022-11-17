@@ -22,11 +22,10 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 
-import { run, setUrlOutput } from '../src/main';
+import { run } from '../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
-  credentials: '{}',
   project_id: '',
   working_directory: '',
   deliverables: 'example-app/app.yaml',
@@ -50,22 +49,22 @@ describe('#run', function () {
     this.stubs = {
       getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
       exportVariable: sinon.stub(core, 'exportVariable'),
-      setFailed: sinon.stub(core, 'setFailed'),
+      setOutput: sinon.stub(core, 'setOutput'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
       getLatestGcloudSDKVersion: sinon.stub(setupGcloud, 'getLatestGcloudSDKVersion'),
-      isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
-      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
+      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
       setProject: sinon.stub(setupGcloud, 'setProject'),
-      parseServiceAccountKey: sinon.stub(setupGcloud, 'parseServiceAccountKey'),
-      isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(false),
-      getExecOutput: sinon.stub(exec, 'getExecOutput'),
+      getExecOutput: sinon
+        .stub(exec, 'getExecOutput')
+        .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
     };
 
     sinon.stub(core, 'debug').callsFake(doNothing);
+    sinon.stub(core, 'endGroup').callsFake(doNothing);
     sinon.stub(core, 'info').callsFake(doNothing);
+    sinon.stub(core, 'startGroup').callsFake(doNothing);
     sinon.stub(core, 'warning').callsFake(doNothing);
-    sinon.stub(core, 'setOutput').callsFake(doNothing);
   });
 
   afterEach(function () {
@@ -85,112 +84,100 @@ describe('#run', function () {
     expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
   });
 
-  it('authenticates if key is provided', async function () {
-    this.stubs.getInput.withArgs('credentials').returns('key');
-    this.stubs.isProjectIdSet.withArgs().returns(true);
+  it('sets project if provided', async function () {
+    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
     await run();
-    expect(this.stubs.authenticateGcloudSDK.withArgs('key').callCount).to.eq(1);
+
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--project', 'my-test-project']);
   });
 
-  it('uses project id from credentials if project_id is not provided', async function () {
-    this.stubs.getInput.withArgs('credentials').returns('key');
-    this.stubs.getInput.withArgs('project_id').returns('');
+  it('sets image-url if provided', async function () {
+    this.stubs.getInput.withArgs('image_url').returns('gcr.io/foo/bar');
     await run();
-    expect(this.stubs.parseServiceAccountKey.withArgs('key').callCount).to.eq(1);
+
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--image-url', 'gcr.io/foo/bar']);
   });
 
-  it('fails if credentials and project_id are not provided', async function () {
-    this.stubs.getInput.withArgs('credentials').returns('');
-    this.stubs.getInput.withArgs('project_id').returns('');
-    process.env.GCLOUD_PROJECT = '';
+  it('sets version if provided', async function () {
+    this.stubs.getInput.withArgs('version').returns('123');
     await run();
-    expect(this.stubs.setFailed.callCount).to.be.at.least(1);
-  });
-});
 
-describe('#setUrlOutput', function () {
-  beforeEach(() => {
-    sinon.stub(core, 'debug').callsFake(doNothing);
-    sinon.stub(core, 'info').callsFake(doNothing);
-    sinon.stub(core, 'warning').callsFake(doNothing);
-    sinon.stub(core, 'setOutput').callsFake(doNothing);
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--version', '123']);
   });
 
-  afterEach(() => {
-    sinon.restore();
+  it('sets promote if provided', async function () {
+    this.stubs.getInput.withArgs('promote').returns('true');
+    await run();
+
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--promote']);
   });
 
-  it('correctly parses the URL', function () {
-    const output = `
-    Services to deploy:
+  it('sets no-promote if not provided', async function () {
+    this.stubs.getInput.withArgs('promote').returns('false');
+    await run();
 
-    descriptor:      [/deploy-appengine/example-app/app.yaml]
-    source:          [/deploy-appengine/example-app]
-    target project:  [PROJECT_ID]
-    target service:  [default]
-    target version:  [20210602t090041]
-    target url:      [https://PROJECT_ID.uc.r.appspot.com]
-
-
-    Do you want to continue (Y/n)?
-
-    Beginning deployment of service [default]...
-    ╔════════════════════════════════════════════════════════════╗
-    ╠═ Uploading 6 files to Google Cloud Storage                ═╣
-    ╚════════════════════════════════════════════════════════════╝
-    File upload done.
-    Updating service [default]...done.
-    Setting traffic split for service [default]...done.
-    Deployed service [default] to [https://PROJECT_ID.uc.r.appspot.com]
-
-    You can stream logs from the command line by running:
-      $ gcloud app logs tail -s default
-
-    To view your application in the web browser run:
-      $ gcloud app browse
-    `;
-    const url = setUrlOutput(output);
-    expect(url).to.eq('https://PROJECT_ID.uc.r.appspot.com');
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--no-promote']);
   });
 
-  it('correctly parses the service URLs', function () {
-    const output = `
-    Services to deploy:
+  it('sets flags if provided', async function () {
+    this.stubs.getInput.withArgs('flags').returns('--log-http   --foo=bar');
+    await run();
 
-    descriptor:      [/deploy-appengine/example-app/app.yaml]
-    source:          [/deploy-appengine/example-app]
-    target project:  [PROJECT_ID]
-    target service:  [service-v2]
-    target version:  [20210602t090752]
-    target url:      [https://service-v2-dot-PROJECT_ID.uc.r.appspot.com]
-
-
-    Do you want to continue (Y/n)?
-
-    Beginning deployment of service [service-v2]...
-    ╔════════════════════════════════════════════════════════════╗
-    ╠═ Uploading 1 file to Google Cloud Storage                 ═╣
-    ╚════════════════════════════════════════════════════════════╝
-    File upload done.
-    Updating service [service-v2]...done.
-    Setting traffic split for service [service-v2]...done.
-    Deployed service [service-v2] to [https://service-v2-dot-PROJECT_ID.uc.r.appspot.com]
-
-    You can stream logs from the command line by running:
-      $ gcloud app logs tail -s service-v2
-
-    To view your application in the web browser run:
-      $ gcloud app browse -s service-v2
-    `;
-    const url = setUrlOutput(output);
-    expect(url).to.eq('https://service-v2-dot-PROJECT_ID.uc.r.appspot.com');
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--log-http', '--foo', 'bar']);
   });
 
-  it('returns undefined', function () {
-    const output = `
-    ERROR: (gcloud.app.deploy) An error occurred while parsing file: [/deploy-appengine/example-app/app.yaml]
-    `;
-    const url = setUrlOutput(output);
-    expect(url).to.eq(undefined);
+  it('sets outputs', async function () {
+    this.stubs.getExecOutput.resolves({
+      exitCode: 0,
+      stderr: '',
+      stdout: `
+        {
+          "versions": [
+            {
+              "version": {
+                "createTime": "2022-11-17T17:18:16Z",
+                "createdBy": "foo@bar.com",
+                "id": "123",
+                "instanceClass": "F1",
+                "name": "apps/my-project/services/default/versions/123",
+                "network": {},
+                "runtime": "nodejs16",
+                "runtimeChannel": "default",
+                "serviceAccount": "my-project@appspot.gserviceaccount.com",
+                "servingStatus": "SERVING",
+                "threadsafe": true,
+                "versionUrl": "https://123-dot-my-project.appspot.com"
+              }
+            }
+          ]
+        }
+      `,
+    });
+    await run();
+
+    const setOutput = this.stubs.setOutput;
+    expect(setOutput.calledWith('name', 'apps/my-project/services/default/versions/123')).to.be.ok;
+    expect(setOutput.calledWith('serviceAccountEmail', 'my-project@appspot.gserviceaccount.com')).to
+      .be.ok;
+    expect(setOutput.calledWith('versionURL', 'https://123-dot-my-project.appspot.com')).to.be.ok;
+    expect(setOutput.calledWith('url', 'https://123-dot-my-project.appspot.com')).to.be.ok;
   });
 });
