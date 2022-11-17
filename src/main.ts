@@ -25,14 +25,13 @@ import {
   setOutput,
 } from '@actions/core';
 import { getExecOutput } from '@actions/exec';
+import { parseDeployResponse } from './output-parser';
 
 import {
   getLatestGcloudSDKVersion,
-  isInstalled as isGcloudSDKInstalled,
+  isInstalled as isGcloudInstalled,
   installGcloudSDK,
-  parseServiceAccountKey,
   authenticateGcloudSDK,
-  isAuthenticated,
   getToolCommand,
 } from '@google-github-actions/setup-cloud-sdk';
 
@@ -45,20 +44,6 @@ import {
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
-
-export function setUrlOutput(output: string): string | undefined {
-  // regex to match Cloud Run URLs
-  const urlMatch = output.match(/(?<=target url:\s+\[)(.*?)(?=\])/g);
-  //(?<=is \()(.*?)(?=\s*\))
-  if (!urlMatch) {
-    logWarning('Can not find URL.');
-    return undefined;
-  }
-  // Match "tagged" URL or default to service URL
-  const url = urlMatch.length > 1 ? urlMatch[1] : urlMatch[0];
-  setOutput('url', url);
-  return url;
-}
 
 /**
  * Executes the main action. It includes the main business logic and is the
@@ -75,26 +60,19 @@ export async function run(): Promise<void> {
     }
 
     // Get action inputs.
-    let projectId = getInput('project_id');
+    const projectId = getInput('project_id');
     const cwd = getInput('working_directory');
     const deliverables = getInput('deliverables');
     const imageUrl = getInput('image_url');
     const version = getInput('version');
-    const promote = getInput('promote');
-    const credentials = getInput('credentials');
+    const promote = (getInput('promote') || '').toLowerCase() === 'true';
     const flags = getInput('flags');
 
-    // Add warning if using credentials
-    if (credentials) {
-      logWarning(
-        'The "credentials" input is deprecated. ' +
-          'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
-          'For more details, see https://github.com/google-github-actions/deploy-appengine#authorization',
-      );
-    }
-
     // Change working directory
-    if (cwd) process.chdir(cwd.trim());
+    if (cwd) {
+      logInfo(`Changing into working directory: ${cwd}`);
+      process.chdir(cwd.trim());
+    }
 
     // Validate deliverables
     const allDeliverables = deliverables.split(' ');
@@ -109,36 +87,26 @@ export async function run(): Promise<void> {
     }
 
     // Install gcloud if not already installed.
-    if (!isGcloudSDKInstalled()) {
+    if (!isGcloudInstalled()) {
       const gcloudVersion = await getLatestGcloudSDKVersion();
       await installGcloudSDK(gcloudVersion);
     }
 
-    // Either credentials or GOOGLE_GHA_CREDS_PATH env var required
-    if (credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
-      await authenticateGcloudSDK(credentials);
-    }
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      throw new Error('Error authenticating the Cloud SDK.');
-    }
-
-    // set PROJECT ID
-    if (!projectId) {
-      if (credentials) {
-        logInfo(`Extracting project ID from service account key`);
-        const key = parseServiceAccountKey(credentials);
-        projectId = key.project_id;
-      } else if (process.env.GCLOUD_PROJECT) {
-        logInfo(`Extracting project ID $GCLOUD_PROJECT`);
-        projectId = process.env.GCLOUD_PROJECT;
-      }
+    // Authenticate - this comes from google-github-actions/auth.
+    const credFile = process.env.GOOGLE_GHA_CREDS_PATH;
+    if (credFile) {
+      await authenticateGcloudSDK(credFile);
+      logInfo('Successfully authenticated');
+    } else {
+      logWarning(
+        'No authentication found for appengine, authenticate with `google-github-actions/auth`.',
+      );
     }
 
     const toolCommand = getToolCommand();
 
     // Create app engine gcloud cmd.
-    let appDeployCmd = ['app', 'deploy', '--quiet', ...allDeliverables];
+    let appDeployCmd = ['app', 'deploy', '--quiet', '--format', 'json', ...allDeliverables];
 
     // Add gcloud flags.
     if (projectId !== '') {
@@ -150,7 +118,7 @@ export async function run(): Promise<void> {
     if (version !== '') {
       appDeployCmd.push('--version', version);
     }
-    if (promote === '' || String(promote).toLowerCase() === 'true') {
+    if (promote) {
       appDeployCmd.push('--promote');
     } else {
       appDeployCmd.push('--no-promote');
@@ -174,8 +142,15 @@ export async function run(): Promise<void> {
     }
 
     // Set url as output.
-    // TODO: update this to use JSON or YAML machine-readable output instead.
-    setUrlOutput(output.stdout + output.stderr);
+    const response = parseDeployResponse(output.stdout);
+    if (response) {
+      setOutput('name', response.name);
+      setOutput('serviceAccountEmail', response.serviceAccountEmail);
+      setOutput('versionURL', response.versionURL);
+      setOutput('url', response.versionURL);
+    } else {
+      logWarning(`no outputs were set, this usually happens with --no-promote`);
+    }
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);

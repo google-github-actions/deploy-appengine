@@ -1,11 +1,13 @@
-name: Deploy to App Engine
-author: Google LLC
+name: 'Deploy to App Engine'
+author: 'Google LLC'
 description: |-
-  Use this action to deploy an application to Google App Engine.
+  Deploy and promote a new service to Google App Engine.
 
 inputs:
   project_id:
-    description: The GCP project ID. Overrides project ID set by credentials.
+    description: |-
+      The Google Cloud Project ID. If unspecified, it is inherited from the
+      environment.
     required: true
 
   working_directory:
@@ -36,16 +38,10 @@ inputs:
     required: false
 
   promote:
-    description: Promote the deployed version to receive all traffic.
+    description: |-
+      Promote the deployed version to receive all traffic.
     required: false
     default: "true"
-
-  credentials:
-    description: |-
-      Service account key to use for authentication. This should be the JSON
-      formatted private key which can be exported from the Cloud Console. The
-      value can be raw or base64-encoded.
-    required: false
 
   flags:
     description: |-

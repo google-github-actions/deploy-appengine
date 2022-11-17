@@ -1,0 +1,65 @@
+name: 'Integration'
+
+on:
+  push:
+    branches:
+    - 'main'
+  pull_request:
+    branches:
+    - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - uses: 'actions/setup-node@v3'
+      with:
+        node-version: '16.x'
+
+    - name: 'npm build'
+      run: 'npm ci && npm run build'
+
+    - uses: 'google-github-actions/auth@main'
+      with:
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.APPENGINE_DEPLOY_SA_EMAIL }}'
+
+    - name: 'Update app.yaml'
+      run: |-
+        echo "service: ${{ github.job }}-${{ github.run_number }}" >> ${{ github.workspace }}/example-app/app.yaml
+
+    - name: 'Deploy'
+      id: 'deploy'
+      uses: './'
+      with:
+        working_directory: '${{ github.workspace }}/example-app'
+
+    - name: 'Verify deployment'
+      run: |-
+        curl '${{ steps.deploy.outputs.url }}' \
+          --silent \
+          --fail \
+          --location \
+          --retry 5 \
+          --retry-connrefused \
+          --retry-delay 5 \
+          --retry-max-time 300
+
+    - name: 'Clean up'
+      if: ${{ always() }}
+      run: |-
+        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
+          --quiet \
+          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
