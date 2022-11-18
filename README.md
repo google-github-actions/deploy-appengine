@@ -31,7 +31,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0'
+      uses: 'google-github-actions/deploy-appengine@v1'
 
     # Example of using the output
     - id: 'test'
@@ -122,7 +122,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0'
+      uses: 'google-github-actions/deploy-appengine@v1'
 ```
 
 ### Via Application Default Credentials
@@ -137,7 +137,7 @@ jobs:
   job_id:
     steps:
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0'
+      uses: 'google-github-actions/deploy-appengine@v1'
 ```
 
 ## Example Workflows
