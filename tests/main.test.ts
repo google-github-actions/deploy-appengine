@@ -54,7 +54,6 @@ describe('#run', function () {
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
       getLatestGcloudSDKVersion: sinon.stub(setupGcloud, 'getLatestGcloudSDKVersion'),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
-      setProject: sinon.stub(setupGcloud, 'setProject'),
       getExecOutput: sinon
         .stub(exec, 'getExecOutput')
         .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
