@@ -28,9 +28,8 @@ jobs:
         BUFFER="$(TZ=GMT+4 date +%Y-%m-%d)"
 
         gcloud config set core/project "${{ secrets.PROJECT_ID }}"
-        gcloud config set run/region "us-central1"
 
-        (IFS=$'\n'; for NAME in $(gcloud app versions list --format="value(id)" --filter="version.createTime.date('%Y-%m-%d', Z) < '${BUFFER}'"); do
+        (IFS=$'\n'; for NAME in $(gcloud app versions list --format="value(id)" --filter="service != "default" AND version.createTime.date('%Y-%m-%d', Z) < '${BUFFER}'"); do
           echo "Deleting ${NAME}..."
           gcloud app versions delete ${NAME} --quiet
         done)
