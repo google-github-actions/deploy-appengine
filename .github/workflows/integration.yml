@@ -34,7 +34,7 @@ jobs:
     - uses: 'google-github-actions/auth@main'
       with:
         workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.APPENGINE_DEPLOY_SA_EMAIL }}'
+        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
 
     - name: 'Update app.yaml'
       run: |-
@@ -56,10 +56,3 @@ jobs:
           --retry-connrefused \
           --retry-delay 5 \
           --retry-max-time 300
-
-    - name: 'Clean up'
-      if: ${{ always() }}
-      run: |-
-        gcloud app services delete "${{ github.job }}-${{ github.run_number }}" \
-          --quiet \
-          --project="${{ secrets.APPENGINE_DEPLOY_PROJECT_ID }}"
