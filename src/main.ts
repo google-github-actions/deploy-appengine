@@ -18,7 +18,6 @@ import fs from 'fs';
 
 import {
   getInput,
-  exportVariable,
   info as logInfo,
   warning as logWarning,
   setFailed,
@@ -38,34 +37,40 @@ import {
 import {
   errorMessage,
   isPinnedToHead,
+  parseBoolean,
   parseFlags,
   pinnedToHeadWarning,
+  stubEnv,
 } from '@google-github-actions/actions-utils';
 
-export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
-export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-appengine';
+// Do not listen to the linter - this can NOT be rewritten as an ES6 import statement.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version: appVersion } = require('../package.json');
 
 /**
  * Executes the main action. It includes the main business logic and is the
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
+  // Register metrics
+  const restoreEnv = stubEnv({
+    CLOUDSDK_METRICS_ENVIRONMENT: 'github-actions-deploy-appengine',
+    CLOUDSDK_METRICS_ENVIRONMENT_VERSION: appVersion,
+  });
+
+  // Warn if pinned to HEAD
+  if (isPinnedToHead()) {
+    logWarning(pinnedToHeadWarning('v0'));
+  }
+
   try {
-    // Register metrics
-    exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
-
-    // Warn if pinned to HEAD
-    if (isPinnedToHead()) {
-      logWarning(pinnedToHeadWarning('v0'));
-    }
-
     // Get action inputs.
     const projectId = getInput('project_id');
     const cwd = getInput('working_directory');
     const deliverables = getInput('deliverables');
     const imageUrl = getInput('image_url');
     const version = getInput('version');
-    const promote = (getInput('promote') || '').toLowerCase() === 'true';
+    const promote = parseBoolean(getInput('promote'));
     const flags = getInput('flags');
 
     // Change working directory
@@ -154,6 +159,8 @@ export async function run(): Promise<void> {
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
+  } finally {
+    restoreEnv();
   }
 }
 
