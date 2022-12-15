@@ -51,8 +51,37 @@ inputs:
     required: false
 
 outputs:
+  name:
+    description: |-
+      The fully-qualified resource name of the deployment. This will be of the
+      format "apps/<project>/services/<service>/versions/<version>".
+
+  runtime:
+    description: |-
+      The computed deployment runtime.
+
+  service_account_email:
+    description: |-
+      The email address of the runtime service account.
+
+  serving_status:
+    description: |-
+      The current serving status. The value is usually "SERVING", unless the
+      deployment failed to start.
+
+  version_id:
+    description: |-
+      Unique identifier for the version, or the specified version if one was
+      given.
+
+  version_url:
+    description: |-
+      URL of the version of the AppEngine service that was deployed.
+
   url:
-    description: URL of your App Engine Application
+    description: |-
+      DEPRECATED: Use "version_url" instead. URL of the version of the AppEngine
+      service that was deployed.
 
 branding:
   icon: 'code'

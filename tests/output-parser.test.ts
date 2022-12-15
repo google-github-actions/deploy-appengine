@@ -17,7 +17,12 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import { parseDeployResponse, DeployOutput } from '../src/output-parser';
+import {
+  parseDeployResponse,
+  DeployResponse,
+  parseDescribeResponse,
+  DescribeResponse,
+} from '../src/output-parser';
 
 describe('#parseDeployResponse', () => {
   const cases: {
@@ -25,7 +30,7 @@ describe('#parseDeployResponse', () => {
     name: string;
     stdout: string | undefined;
     error?: string;
-    expected?: DeployOutput | null;
+    expected?: DeployResponse | null;
   }[] = [
     {
       name: 'with promote',
@@ -101,9 +106,9 @@ describe('#parseDeployResponse', () => {
         }
       `,
       expected: {
-        name: 'apps/my-project/services/default/versions/20221117t121206',
-        serviceAccountEmail: 'my-project@appspot.gserviceaccount.com',
-        versionURL: 'https://20221117t121206-dot-my-project.appspot.com',
+        project: 'my-project',
+        service: 'default',
+        versionID: '20221117t121206',
       },
     },
     {
@@ -160,9 +165,9 @@ describe('#parseDeployResponse', () => {
         }
       `,
       expected: {
-        name: 'apps/my-project/services/default/versions/123',
-        serviceAccountEmail: 'my-project@appspot.gserviceaccount.com',
-        versionURL: 'https://123-dot-my-project.appspot.com',
+        project: 'my-project',
+        service: 'default',
+        versionID: '123',
       },
     },
     {
@@ -175,7 +180,7 @@ describe('#parseDeployResponse', () => {
               "environment": null,
               "id": "123",
               "last_deployed_time": null,
-              "project": "poopy-candles",
+              "project": "my-project",
               "service": "default",
               "service_account": null,
               "traffic_split": null,
@@ -184,22 +189,26 @@ describe('#parseDeployResponse', () => {
           ]
         }
       `,
-      expected: null,
+      expected: {
+        project: 'my-project',
+        service: 'default',
+        versionID: '123',
+      },
     },
     {
       name: 'empty stdout',
       stdout: ``,
-      expected: null,
+      error: `empty response`,
     },
     {
       name: 'empty array from stdout',
       stdout: `[]`,
-      expected: null,
+      error: `missing or empty "versions"`,
     },
     {
       name: 'empty object from stdout',
       stdout: `{}`,
-      expected: null,
+      error: `missing or empty "versions"`,
     },
     {
       name: 'invalid text from stdout',
@@ -217,6 +226,87 @@ describe('#parseDeployResponse', () => {
         }).to.throw(tc.error);
       } else {
         expect(parseDeployResponse(tc.stdout)).to.eql(tc.expected);
+      }
+    });
+  });
+});
+
+describe('#parseDescribeResponse', () => {
+  const cases: {
+    only?: boolean;
+    name: string;
+    stdout: string | undefined;
+    error?: string;
+    expected?: DescribeResponse | null;
+  }[] = [
+    {
+      name: 'with response',
+      stdout: `
+        {
+          "createTime": "2022-12-15T15:26:11Z",
+          "createdBy": "foo@bar.com",
+          "deployment": {
+            "files": {
+              "app.yaml": {
+                "sha1Sum": "84a6883be145d40d7f34901050f403f51faba608",
+                "sourceUrl": "https://storage.googleapis.com/staging.my-project.appspot.com/84a6883be145d40d7f34901050f403f51faba608"
+              }
+            }
+          },
+          "diskUsageBytes": "4288402",
+          "env": "standard",
+          "id": "20221215t102539",
+          "instanceClass": "F1",
+          "name": "apps/my-project/services/default/versions/20221215t102539",
+          "network": {},
+          "runtime": "nodejs16",
+          "runtimeChannel": "default",
+          "serviceAccount": "my-project@appspot.gserviceaccount.com",
+          "servingStatus": "SERVING",
+          "threadsafe": true,
+          "versionUrl": "https://20221215t102539-dot-my-project.appspot.com"
+        }
+      `,
+      expected: {
+        name: 'apps/my-project/services/default/versions/20221215t102539',
+        runtime: 'nodejs16',
+        serviceAccountEmail: 'my-project@appspot.gserviceaccount.com',
+        servingStatus: 'SERVING',
+        versionID: '20221215t102539',
+        versionURL: 'https://20221215t102539-dot-my-project.appspot.com',
+      },
+    },
+    {
+      name: 'empty stdout',
+      stdout: ``,
+      error: `empty response`,
+    },
+    {
+      name: 'empty array from stdout',
+      stdout: `[]`,
+      error: `empty response`,
+    },
+    {
+      name: 'empty object from stdout',
+      stdout: `{}`,
+      error: `empty response`,
+    },
+    {
+      name: 'invalid text from stdout',
+      stdout: `Some text to fail`,
+      error: `failed to parse describe response: unexpected token`,
+    },
+  ];
+
+  cases.forEach((tc) => {
+    const fn = tc.only ? it.only : it;
+    fn(tc.name, () => {
+      if (tc.error) {
+        expect(() => {
+          parseDescribeResponse(tc.stdout);
+        }).to.throw(tc.error);
+      } else {
+        expect(parseDescribeResponse(tc.stdout)).to.eql(tc.expected);
       }
     });
   });
