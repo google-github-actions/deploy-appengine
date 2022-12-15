@@ -21,6 +21,7 @@ import * as sinon from 'sinon';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
+import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 
 import { run } from '../src/main';
 
@@ -39,13 +40,10 @@ function getInputMock(name: string): string {
   return fakeInputs[name];
 }
 
-// Stub somewhat annoying logs
-function doNothing(): void {
-  /** do nothing */
-}
-
 describe('#run', function () {
   beforeEach(async function () {
+    await TestToolCache.start();
+
     this.stubs = {
       getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
       exportVariable: sinon.stub(core, 'exportVariable'),
@@ -56,19 +54,26 @@ describe('#run', function () {
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
       getExecOutput: sinon
         .stub(exec, 'getExecOutput')
-        .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
+        .onFirstCall()
+        .resolves({ exitCode: 0, stderr: '', stdout: testDeployResponse })
+        .onSecondCall()
+        .resolves({ exitCode: 0, stderr: '', stdout: testDescribeResponse }),
     };
 
-    sinon.stub(core, 'debug').callsFake(doNothing);
-    sinon.stub(core, 'endGroup').callsFake(doNothing);
-    sinon.stub(core, 'info').callsFake(doNothing);
-    sinon.stub(core, 'startGroup').callsFake(doNothing);
-    sinon.stub(core, 'warning').callsFake(doNothing);
+    sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
+    sinon.stub(core, 'addPath').callsFake(sinon.fake());
+    sinon.stub(core, 'debug').callsFake(sinon.fake());
+    sinon.stub(core, 'endGroup').callsFake(sinon.fake());
+    sinon.stub(core, 'info').callsFake(sinon.fake());
+    sinon.stub(core, 'startGroup').callsFake(sinon.fake());
+    sinon.stub(core, 'warning').callsFake(sinon.fake());
   });
 
-  afterEach(function () {
+  afterEach(async function () {
     Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
     sinon.restore();
+
+    await TestToolCache.stop();
   });
 
   it('installs the gcloud SDK if it is not already installed', async function () {
@@ -144,39 +149,66 @@ describe('#run', function () {
   });
 
   it('sets outputs', async function () {
-    this.stubs.getExecOutput.resolves({
-      exitCode: 0,
-      stderr: '',
-      stdout: `
-        {
-          "versions": [
-            {
-              "version": {
-                "createTime": "2022-11-17T17:18:16Z",
-                "createdBy": "foo@bar.com",
-                "id": "123",
-                "instanceClass": "F1",
-                "name": "apps/my-project/services/default/versions/123",
-                "network": {},
-                "runtime": "nodejs16",
-                "runtimeChannel": "default",
-                "serviceAccount": "my-project@appspot.gserviceaccount.com",
-                "servingStatus": "SERVING",
-                "threadsafe": true,
-                "versionUrl": "https://123-dot-my-project.appspot.com"
-              }
-            }
-          ]
-        }
-      `,
-    });
     await run();
 
     const setOutput = this.stubs.setOutput;
-    expect(setOutput.calledWith('name', 'apps/my-project/services/default/versions/123')).to.be.ok;
-    expect(setOutput.calledWith('serviceAccountEmail', 'my-project@appspot.gserviceaccount.com')).to
-      .be.ok;
-    expect(setOutput.calledWith('versionURL', 'https://123-dot-my-project.appspot.com')).to.be.ok;
-    expect(setOutput.calledWith('url', 'https://123-dot-my-project.appspot.com')).to.be.ok;
+    expect(
+      setOutput.calledWith('name', 'apps/my-project/services/default/versions/20221215t102539'),
+    ).to.be.ok;
+    expect(setOutput.calledWith('runtime', 'nodejs16')).to.be.ok;
+    expect(setOutput.calledWith('service_account_email', 'my-project@appspot.gserviceaccount.com'))
+      .to.be.ok;
+    expect(setOutput.calledWith('serving_status', 'SERVING')).to.be.ok;
+    expect(setOutput.calledWith('version_id', '20221215t102539')).to.be.ok;
+    expect(
+      setOutput.calledWith('version_url', 'https://20221215t102539-dot-my-project.appspot.com'),
+    ).to.be.ok;
+    expect(setOutput.calledWith('url', 'https://20221215t102539-dot-my-project.appspot.com')).to.be
+      .ok;
   });
 });
+
+const testDeployResponse = `
+{
+  "configs": [],
+  "versions": [
+    {
+      "environment": null,
+      "id": "123",
+      "last_deployed_time": null,
+      "project": "my-project",
+      "service": "default",
+      "service_account": null,
+      "traffic_split": null,
+      "version": null
+    }
+  ]
+}
+`;
+
+const testDescribeResponse = `
+{
+  "createTime": "2022-12-15T15:26:11Z",
+  "createdBy": "foo@bar.com",
+  "deployment": {
+    "files": {
+      "app.yaml": {
+        "sha1Sum": "84a6883be145d40d7f34901050f403f51faba608",
+        "sourceUrl": "https://storage.googleapis.com/staging.my-project.appspot.com/84a6883be145d40d7f34901050f403f51faba608"
+      }
+    }
+  },
+  "diskUsageBytes": "4288402",
+  "env": "standard",
+  "id": "20221215t102539",
+  "instanceClass": "F1",
+  "name": "apps/my-project/services/default/versions/20221215t102539",
+  "network": {},
+  "runtime": "nodejs16",
+  "runtimeChannel": "default",
+  "serviceAccount": "my-project@appspot.gserviceaccount.com",
+  "servingStatus": "SERVING",
+  "threadsafe": true,
+  "versionUrl": "https://20221215t102539-dot-my-project.appspot.com"
+}
+`;

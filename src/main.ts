@@ -19,12 +19,13 @@ import fs from 'fs';
 import {
   getInput,
   info as logInfo,
+  debug as logDebug,
   warning as logWarning,
   setFailed,
   setOutput,
 } from '@actions/core';
 import { getExecOutput } from '@actions/exec';
-import { parseDeployResponse } from './output-parser';
+import { parseDeployResponse, parseDescribeResponse } from './output-parser';
 
 import {
   getLatestGcloudSDKVersion,
@@ -43,7 +44,8 @@ import {
   stubEnv,
 } from '@google-github-actions/actions-utils';
 
-// Do not listen to the linter - this can NOT be rewritten as an ES6 import statement.
+// Do not listen to the linter - this can NOT be rewritten as an ES6 import
+// statement.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
@@ -60,7 +62,7 @@ export async function run(): Promise<void> {
 
   // Warn if pinned to HEAD
   if (isPinnedToHead()) {
-    logWarning(pinnedToHeadWarning('v0'));
+    logWarning(pinnedToHeadWarning('v1'));
   }
 
   try {
@@ -136,26 +138,53 @@ export async function run(): Promise<void> {
     }
 
     const options = { silent: true, ignoreReturnCode: true };
-    const commandString = `${toolCommand} ${appDeployCmd.join(' ')}`;
-    logInfo(`Running: ${commandString}`);
+    const deployCommandString = `${toolCommand} ${appDeployCmd.join(' ')}`;
+    logInfo(`Running: ${deployCommandString}`);
 
     // Get output of gcloud cmd.
-    const output = await getExecOutput(toolCommand, appDeployCmd, options);
-    if (output.exitCode !== 0) {
-      const errMsg = output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
-      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+    const deployOutput = await getExecOutput(toolCommand, appDeployCmd, options);
+    if (deployOutput.exitCode !== 0) {
+      const errMsg =
+        deployOutput.stderr || `command exited ${deployOutput.exitCode}, but stderr had no output`;
+      throw new Error(`failed to execute gcloud command \`${deployCommandString}\`: ${errMsg}`);
     }
 
-    // Set url as output.
-    const response = parseDeployResponse(output.stdout);
-    if (response) {
-      setOutput('name', response.name);
-      setOutput('serviceAccountEmail', response.serviceAccountEmail);
-      setOutput('versionURL', response.versionURL);
-      setOutput('url', response.versionURL);
-    } else {
-      logWarning(`no outputs were set, this usually happens with --no-promote`);
+    // Extract the version from the response.
+    const deployResponse = parseDeployResponse(deployOutput.stdout);
+    logDebug(`Deployed new version: ${JSON.stringify(deployResponse)}`);
+
+    // Look up the new version to get metadata.
+    const appVersionsDescribeCmd = ['app', 'versions', 'describe', '--quiet', '--format', 'json'];
+    appVersionsDescribeCmd.push('--project', deployResponse.project);
+    appVersionsDescribeCmd.push('--service', deployResponse.service);
+    appVersionsDescribeCmd.push(deployResponse.versionID);
+
+    const describeCommandString = `${toolCommand} ${appVersionsDescribeCmd.join(' ')}`;
+    logInfo(`Running: ${describeCommandString}`);
+
+    const describeOutput = await getExecOutput(toolCommand, appVersionsDescribeCmd, options);
+    if (describeOutput.exitCode !== 0) {
+      const errMsg =
+        describeOutput.stderr ||
+        `command exited ${describeOutput.exitCode}, but stderr had no output`;
+      throw new Error(`failed to execute gcloud command \`${describeCommandString}\`: ${errMsg}`);
     }
+
+    // Parse the describe response.
+    const describeResponse = parseDescribeResponse(describeOutput.stdout);
+
+    // Set outputs.
+    setOutput('name', describeResponse.name);
+    setOutput('runtime', describeResponse.runtime);
+    setOutput('service_account_email', describeResponse.serviceAccountEmail);
+    setOutput('serving_status', describeResponse.servingStatus);
+    setOutput('version_id', describeResponse.versionID);
+    setOutput('version_url', describeResponse.versionURL);
+
+    // Backwards compatability.
+    setOutput('serviceAccountEmail', describeResponse.serviceAccountEmail);
+    setOutput('versionURL', describeResponse.versionURL);
+    setOutput('url', describeResponse.versionURL);
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);

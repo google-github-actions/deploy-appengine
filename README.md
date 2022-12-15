@@ -85,7 +85,21 @@ for more information.
 
 ## Outputs
 
-- `url`: The URL of your App Engine Application.
+-   `name`: The fully-qualified resource name of the deployment. This will be of
+    the format "apps/<project>/services/<service>/versions/<version>".
+
+-   `runtime`: The computed deployment runtime.
+
+-   `service_account_email`: The email address of the runtime service account.
+
+-   `serving_status`: The current serving status. The value is usually
+    "SERVING", unless the deployment failed to start.
+
+-   `version_id`: Unique identifier for the version, or the specified version if
+    one was given.
+
+-   `version_url`: URL of the version of the AppEngine service that was
+    deployed.
 
 ## Authorization
 
