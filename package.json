@@ -1,6 +1,6 @@
 {
   "name": "deploy-appengine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Github Action: Deploy to Google App Engine",
   "main": "dist/index.js",
   "scripts": {
