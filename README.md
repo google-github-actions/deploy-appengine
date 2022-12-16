@@ -105,14 +105,21 @@ for more information.
 
 There are a few ways to authenticate this action. The caller must have the following [Google Cloud IAM Roles](https://cloud.google.com/appengine/docs/standard/python/roles#predefined_roles):
 
--   App Engine Admin (`roles/appengine.appAdmin`): can manage all App Engine
-    resources
--   Service Account User (`roles/iam.serviceAccountUser`): to deploy as the
-    service account
--   Storage Admin (`roles/compute.storageAdmin`): to upload files
--   Cloud Build Editor (`roles/cloudbuild.builds.editor`): to build the
-    application
--   _(optional)_ Cloud Scheduler Admin (`roles/cloudscheduler.admin`): to
+-   App Engine Admin (`roles/appengine.appAdmin`) to manage all App Engine
+    resources and create new services and versions.
+
+-   Storage Admin (`roles/storage.admin`) to upload files to Cloud Storage to
+    store source artifacts.
+
+-   Cloud Build Editor (`roles/cloudbuild.builds.editor`) to build the
+    service.
+
+-   Service Account User (`roles/iam.serviceAccountUser`) permissions on the
+    runtime service account to deploy the service. The default runtime service
+    account is `PROJECT_ID@appspot.gserviceaccount.com`, but you can also
+    customize the service account in your app.yaml file.
+
+-   _(optional)_ Cloud Scheduler Admin (`roles/cloudscheduler.admin`) to
     schedule tasks
 
 *Note:* An owner will be needed to create the App Engine application.
