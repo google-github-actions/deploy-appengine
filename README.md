@@ -79,12 +79,10 @@ jobs:
 
 ---
 
--   `gcloud_version`: (Optional) Version of the gcloud CLI to use. The default
-    value is `latest`.
+-   `gcloud_version`: (Optional) Version of the gcloud CLI to use. The default value is `latest`.
 
--    `gcloud_component`: (Optional) Component of the gcloud CLI to use. Valid
-     values are `alpha` and `beta`. The default value is to use the stable
-     track.
+-   `gcloud_component`: (Optional) Component of the gcloud CLI to use. Valid
+    values are `alpha` and `beta`. The default value is to use the stable track.
 
 ### app.yaml customizations
 
