@@ -50,6 +50,21 @@ inputs:
       --service-account=my-account@project.iam.gserviceaccount.com --no-cache
     required: false
 
+  gcloud_version:
+    description: |-
+      Version of the Cloud SDK to install. If unspecified or set to "latest",
+      the latest available gcloud SDK version for the target platform will be
+      installed. Example: "290.0.1".
+    required: false
+
+  gcloud_component:
+    description: |-
+      Version of the Cloud SDK components to install and use. If unspecified,
+      the latest or released version will be used. This is the equivalent of
+      running 'gcloud alpha COMMAND' or 'gcloud beta COMMAND'. Valid values are
+      `alpha` or `beta`. The default value is to use the stable track.
+    required: false
+
 outputs:
   name:
     description: |-
