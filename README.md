@@ -161,39 +161,26 @@ jobs:
       uses: 'google-github-actions/deploy-appengine@v1'
 ```
 
-## Example Workflows
+## Advanced Configuration
 
-* [Deploy from source](#deploy-from-source)
+#### Custom Build Timeouts
 
-### Setup
+The default Google Cloud Build timeout to compile the application may be too
+short for some services. To extend the build timeout, set the
+`CLOUDSDK_APP_CLOUD_BUILD_TIMEOUT` environment variable to an integer
+representing the number of seconds for the timeout. Do not customize this value
+unless you are getting errors about build timeouts. This will consume more build
+minutes.
 
-1.  Clone this repo.
-
-1.  Create a new Google Cloud Project (or select an existing project).
-
-1.  [Initialize your App Engine app with your project][app-engine-nodejs-docs].
-
-1.  Enable the [App Engine Admin API][app-engine-admin-api] on your project.
-
-1.  [Create a Google Cloud service account][sa] or select an existing one.
-
-1.  Add [required roles](#authorization) to [your service account][roles].
-
-1.  [Download a JSON service account key][create-key] for the service account.
-
-1.  Add the following [secrets to your repository's secrets][gh-secret]:
-
-    - `GCP_PROJECT`: Google Cloud project ID
-
-    - `GCP_SA_KEY`: the downloaded service account key
-
-### Deploy from source
-
-To run this workflow, push to the branch named `example`:
-
-```sh
-git push YOUR-FORK main:example
+```yaml
+jobs:
+  job_id:
+    steps:
+    - uses: 'google-github-actions/deploy-appengine@v1'
+      env:
+        CLOUDSDK_APP_CLOUD_BUILD_TIMEOUT: 1800 # 30 minutes
 ```
+
 
 [gae]: https://cloud.google.com/appengine
 [sm]: https://cloud.google.com/secret-manager
