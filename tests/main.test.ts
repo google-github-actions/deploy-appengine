@@ -22,6 +22,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
+import { errorMessage } from '@google-github-actions/actions-utils';
 
 import { run } from '../src/main';
 
@@ -48,10 +49,13 @@ describe('#run', function () {
       getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
       exportVariable: sinon.stub(core, 'exportVariable'),
       setOutput: sinon.stub(core, 'setOutput'),
-      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-      getLatestGcloudSDKVersion: sinon.stub(setupGcloud, 'getLatestGcloudSDKVersion'),
+      getLatestGcloudSDKVersion: sinon
+        .stub(setupGcloud, 'getLatestGcloudSDKVersion')
+        .resolves('1.2.3'),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
+      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
+      installComponent: sinon.stub(setupGcloud, 'installComponent'),
       getExecOutput: sinon
         .stub(exec, 'getExecOutput')
         .onFirstCall()
@@ -86,6 +90,28 @@ describe('#run', function () {
     this.stubs.isInstalled.returns(true);
     await run();
     expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
+  });
+
+  it('uses default components without gcloud_component flag', async function () {
+    await run();
+    expect(this.stubs.installComponent.callCount).to.eq(0);
+  });
+
+  it('throws error with invalid gcloud component flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
+    await expectError(run, 'invalid value for gcloud_component: wrong_value');
+  });
+
+  it('installs alpha component with alpha flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
+    await run();
+    expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
+  });
+
+  it('installs beta component with beta flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('beta');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
 
   it('sets project if provided', async function () {
@@ -167,6 +193,16 @@ describe('#run', function () {
       .ok;
   });
 });
+
+async function expectError(fn: () => Promise<void>, want: string) {
+  try {
+    await fn();
+    throw new Error(`expected error`);
+  } catch (err) {
+    const msg = errorMessage(err);
+    expect(msg).to.include(want);
+  }
+}
 
 const testDeployResponse = `
 {

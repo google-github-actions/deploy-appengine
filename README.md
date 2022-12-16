@@ -77,6 +77,15 @@ jobs:
 
     See the [complete list of flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for more information.
 
+---
+
+-   `gcloud_version`: (Optional) Version of the gcloud CLI to use. The default
+    value is `latest`.
+
+-    `gcloud_component`: (Optional) Component of the gcloud CLI to use. Valid
+     values are `alpha` and `beta`. The default value is to use the stable
+     track.
+
 ### app.yaml customizations
 
 Other application configurations can be customized through the app.yaml, ie the

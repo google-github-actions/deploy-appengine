@@ -15,24 +15,27 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import {
+  addPath,
+  debug as logDebug,
   getInput,
   info as logInfo,
-  debug as logDebug,
-  warning as logWarning,
   setFailed,
   setOutput,
+  warning as logWarning,
 } from '@actions/core';
 import { getExecOutput } from '@actions/exec';
-import { parseDeployResponse, parseDescribeResponse } from './output-parser';
+import * as toolCache from '@actions/tool-cache';
 
 import {
-  getLatestGcloudSDKVersion,
-  isInstalled as isGcloudInstalled,
-  installGcloudSDK,
   authenticateGcloudSDK,
+  getLatestGcloudSDKVersion,
   getToolCommand,
+  installComponent as installGcloudComponent,
+  installGcloudSDK,
+  isInstalled as isGcloudInstalled,
 } from '@google-github-actions/setup-cloud-sdk';
 
 import {
@@ -41,8 +44,11 @@ import {
   parseBoolean,
   parseFlags,
   pinnedToHeadWarning,
+  presence,
   stubEnv,
 } from '@google-github-actions/actions-utils';
+
+import { parseDeployResponse, parseDescribeResponse } from './output-parser';
 
 // Do not listen to the linter - this can NOT be rewritten as an ES6 import
 // statement.
@@ -67,13 +73,20 @@ export async function run(): Promise<void> {
 
   try {
     // Get action inputs.
-    const projectId = getInput('project_id');
-    const cwd = getInput('working_directory');
-    const deliverables = getInput('deliverables');
-    const imageUrl = getInput('image_url');
-    const version = getInput('version');
+    const projectId = presence(getInput('project_id'));
+    const cwd = presence(getInput('working_directory'));
+    const deliverables = (presence(getInput('deliverables')) || 'app.yaml').split(' ');
+    const imageUrl = presence(getInput('image_url'));
+    const version = presence(getInput('version'));
     const promote = parseBoolean(getInput('promote'));
-    const flags = getInput('flags');
+    const flags = presence(getInput('flags'));
+    const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
+    const gcloudComponent = presence(getInput('gcloud_component'));
+
+    // Validate gcloud component input
+    if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
+      throw new Error(`invalid value for gcloud_component: ${gcloudComponent}`);
+    }
 
     // Change working directory
     if (cwd) {
@@ -82,9 +95,7 @@ export async function run(): Promise<void> {
     }
 
     // Validate deliverables
-    const allDeliverables = deliverables.split(' ');
-    if (allDeliverables[0] == '') allDeliverables[0] = 'app.yaml';
-    for (const deliverable of allDeliverables) {
+    for (const deliverable of deliverables) {
       if (!fs.existsSync(deliverable)) {
         const message =
           `Deliverable ${deliverable} can not be found. ` +
@@ -93,36 +104,19 @@ export async function run(): Promise<void> {
       }
     }
 
-    // Install gcloud if not already installed.
-    if (!isGcloudInstalled()) {
-      const gcloudVersion = await getLatestGcloudSDKVersion();
-      await installGcloudSDK(gcloudVersion);
-    }
-
-    // Authenticate - this comes from google-github-actions/auth.
-    const credFile = process.env.GOOGLE_GHA_CREDS_PATH;
-    if (credFile) {
-      await authenticateGcloudSDK(credFile);
-      logInfo('Successfully authenticated');
-    } else {
-      logWarning(
-        'No authentication found for appengine, authenticate with `google-github-actions/auth`.',
-      );
-    }
-
     const toolCommand = getToolCommand();
 
     // Create app engine gcloud cmd.
-    let appDeployCmd = ['app', 'deploy', '--quiet', '--format', 'json', ...allDeliverables];
+    let appDeployCmd = ['app', 'deploy', '--quiet', '--format', 'json', ...deliverables];
 
     // Add gcloud flags.
-    if (projectId !== '') {
+    if (projectId) {
       appDeployCmd.push('--project', projectId);
     }
-    if (imageUrl !== '') {
+    if (imageUrl) {
       appDeployCmd.push('--image-url', imageUrl);
     }
-    if (version !== '') {
+    if (version) {
       appDeployCmd.push('--version', version);
     }
     if (promote) {
@@ -135,6 +129,29 @@ export async function run(): Promise<void> {
     if (flags) {
       const flagList = parseFlags(flags);
       if (flagList) appDeployCmd = appDeployCmd.concat(flagList);
+    }
+
+    // Install gcloud if not already installed.
+    if (!isGcloudInstalled(gcloudVersion)) {
+      await installGcloudSDK(gcloudVersion);
+    } else {
+      const toolPath = toolCache.find('gcloud', gcloudVersion);
+      addPath(path.join(toolPath, 'bin'));
+    }
+
+    // Install gcloud component if needed and prepend the command
+    if (gcloudComponent) {
+      await installGcloudComponent(gcloudComponent);
+      appDeployCmd.unshift(gcloudComponent);
+    }
+
+    // Authenticate - this comes from google-github-actions/auth.
+    const credFile = process.env.GOOGLE_GHA_CREDS_PATH;
+    if (credFile) {
+      await authenticateGcloudSDK(credFile);
+      logInfo('Successfully authenticated');
+    } else {
+      logWarning('No authentication found, authenticate with `google-github-actions/auth`.');
     }
 
     const options = { silent: true, ignoreReturnCode: true };
@@ -158,6 +175,11 @@ export async function run(): Promise<void> {
     appVersionsDescribeCmd.push('--project', deployResponse.project);
     appVersionsDescribeCmd.push('--service', deployResponse.service);
     appVersionsDescribeCmd.push(deployResponse.versionID);
+
+    // Prepend component to command (it was already installed above)
+    if (gcloudComponent) {
+      appVersionsDescribeCmd.unshift(gcloudComponent);
+    }
 
     const describeCommandString = `${toolCommand} ${appVersionsDescribeCmd.join(' ')}`;
     logInfo(`Running: ${describeCommandString}`);
@@ -191,6 +213,18 @@ export async function run(): Promise<void> {
   } finally {
     restoreEnv();
   }
+}
+
+/**
+ * computeGcloudVersion computes the appropriate gcloud version for the given
+ * string.
+ */
+async function computeGcloudVersion(str: string): Promise<string> {
+  str = (str || '').trim();
+  if (str === '' || str === 'latest') {
+    return await getLatestGcloudSDKVersion();
+  }
+  return str;
 }
 
 // Execute this as the entrypoint when requested.
