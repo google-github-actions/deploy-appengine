@@ -45,6 +45,12 @@ jobs:
       uses: './'
       with:
         working_directory: '${{ github.workspace }}/example-app'
+        build_env_vars: |-
+          FOO=bar
+          ZIP=zap
+        env_vars: |-
+          FOO=bar
+          ZIP=zap
 
     - name: 'Verify deployment'
       run: |-

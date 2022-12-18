@@ -57,6 +57,34 @@ jobs:
     the additional deliverables may require additional roles for your service
     account user.
 
+-   `build_env_vars`: (Optional) List of key=value pairs to set as environment
+    variables during tbe build process. This will overwrite any duplicate key
+    environment variables defined in the app.yaml.
+
+    ```yaml
+    with:
+      build_env_vars: |-
+        FOO=bar
+        ZIP=zap
+    ```
+
+    Note: To include environment variables defined in another file, use the
+    [`includes` directive][includes-directive] in your app.yaml.
+
+-   `env_vars`: (Optional) List of key=value pairs to set as environment
+    variables. This will overwrite any duplicate key environment variables
+    defined in the app.yaml.
+
+    ```yaml
+    with:
+      env_vars: |-
+        FOO=bar
+        ZIP=zap
+    ```
+
+    Note: To include environment variables defined in another file, use the
+    [`includes` directive][includes-directive] in your app.yaml.
+
 -   `image_url`: (Optional) Deploy with a specific container image. The image
     url must be from one of the valid GCR hostnames (example, `gcr.io/`).
 
@@ -200,3 +228,4 @@ jobs:
 [create-key]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys
 [app-engine-admin-api]: https://console.cloud.google.com/apis/api/appengine.googleapis.com/overview
 [app-engine-nodejs-docs]: https://cloud.google.com/appengine/docs/standard/nodejs/console#console
+[includes-directive]: https://cloud.google.com/appengine/docs/legacy/standard/python/config/appref#includes
