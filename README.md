@@ -67,15 +67,15 @@ jobs:
 -   `promote`: (Optional) Promote the deployed version to receive all traffic.
     The default is `true`.
 
--   `flags`: (Optional) Space-separated list of other Cloud Run flags. This can
+-   `flags`: (Optional) Space-separated list of other App Engine flags. This can
     be used to access features that are not exposed via this GitHub Action.
 
     ```yaml
     with:
-      flags: '--add-cloudsql-instances=...'
+      flags: '--ignore-file=...'
     ```
 
-    See the [complete list of flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for more information.
+    See the [complete list of flags](https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS) for more information.
 
 ---
 
