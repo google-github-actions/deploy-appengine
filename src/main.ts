@@ -122,7 +122,10 @@ export async function run(): Promise<void> {
     );
 
     // Modify app.yaml if envvars were given.
-    if (envVars || buildEnvVars) {
+    if (
+      (envVars && Object.keys(envVars).length > 0) ||
+      (buildEnvVars && Object.keys(buildEnvVars).length > 0)
+    ) {
       logDebug(`Updating env_variables or build_env_variables`);
 
       originalAppYamlPath = findAppYaml(deliverables);
