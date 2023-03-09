@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
+
+import YAML from 'yaml';
 
 import {
   addPath,
@@ -41,8 +43,10 @@ import {
 import {
   errorMessage,
   isPinnedToHead,
+  KVPair,
   parseBoolean,
   parseFlags,
+  parseKVString,
   pinnedToHeadWarning,
   presence,
   stubEnv,
@@ -54,6 +58,10 @@ import { parseDeployResponse, parseDescribeResponse } from './output-parser';
 // statement.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
+
+// originalAppYamlContents and originalAppYamlPath is a reference to the
+// original app.yaml contents and path.
+let originalAppYamlContents: string, originalAppYamlPath: string;
 
 /**
  * Executes the main action. It includes the main business logic and is the
@@ -76,6 +84,8 @@ export async function run(): Promise<void> {
     const projectId = presence(getInput('project_id'));
     const cwd = presence(getInput('working_directory'));
     const deliverables = (presence(getInput('deliverables')) || 'app.yaml').split(' ');
+    const buildEnvVars = parseKVString(getInput('build_env_vars'));
+    const envVars = parseKVString(getInput('env_vars'));
     const imageUrl = presence(getInput('image_url'));
     const version = presence(getInput('version'));
     const promote = parseBoolean(getInput('promote'));
@@ -95,13 +105,43 @@ export async function run(): Promise<void> {
     }
 
     // Validate deliverables
-    for (const deliverable of deliverables) {
-      if (!fs.existsSync(deliverable)) {
-        const message =
-          `Deliverable ${deliverable} can not be found. ` +
-          'Check `working_directory` and `deliverables` input paths.';
-        throw new Error(message);
+    await Promise.all(
+      deliverables.map((deliverable) => {
+        return new Promise<void>((resolve, reject) => {
+          fs.access(deliverable)
+            .then(resolve)
+            .catch((err) => {
+              const rejection =
+                `Deliverable ${deliverable} not found or the ` +
+                `caller does not have permission, check "working_direcotry" ` +
+                `and "deliverables" inputs: ${err}`;
+              reject(new Error(rejection));
+            });
+        });
+      }),
+    );
+
+    // Modify app.yaml if envvars were given.
+    if (envVars || buildEnvVars) {
+      logDebug(`Updating env_variables or build_env_variables`);
+
+      originalAppYamlPath = findAppYaml(deliverables);
+      originalAppYamlContents = await fs.readFile(originalAppYamlPath, 'utf8');
+      const parsed = YAML.parse(originalAppYamlContents);
+
+      parsed.build_env_variables = updateEnvVars(parsed.build_env_variables, buildEnvVars);
+      if (!Object.keys(parsed.build_env_variables).length) {
+        delete parsed.build_env_variables;
       }
+
+      parsed.env_variables = updateEnvVars(parsed.env_variables, envVars);
+      if (!Object.keys(parsed.env_variables).length) {
+        delete parsed.env_variables;
+      }
+
+      const newAppYaml = YAML.stringify(parsed);
+      logDebug(`Updated ${originalAppYamlPath}:\n\n${newAppYaml}\n`);
+      await fs.writeFile(originalAppYamlPath, newAppYaml, { flag: 'w' });
     }
 
     const toolCommand = getToolCommand();
@@ -212,6 +252,11 @@ export async function run(): Promise<void> {
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   } finally {
     restoreEnv();
+
+    if (originalAppYamlPath && originalAppYamlContents) {
+      logDebug(`Restoring original ${originalAppYamlPath} contents`);
+      await fs.writeFile(originalAppYamlPath, originalAppYamlContents, { flag: 'w' });
+    }
   }
 }
 
@@ -225,6 +270,46 @@ async function computeGcloudVersion(str: string): Promise<string> {
     return await getLatestGcloudSDKVersion();
   }
   return str;
+}
+
+/**
+ * findAppYaml finds the best app.yaml or app.yml file in the list of
+ * deliverables. It returns a tuple of the index and the path. If no file is
+ * found, it throws an error.
+ *
+ * @return [number, string]
+ */
+export function findAppYaml(list: string[]): string {
+  const idx = list.findIndex((item) => {
+    return item.endsWith('app.yml') || item.endsWith('app.yaml');
+  });
+
+  const pth = list[idx];
+  if (!pth) {
+    throw new Error(`Could not find "app.yml" file`);
+  }
+
+  return pth;
+}
+
+/**
+ * updateEnvVars updates the environment variables and returns the modified
+ * contents. The incoming environment variables take precendence over the old
+ * ones.
+ *
+ * @param existing The existing KEY=VALUE pairs to parse.
+ * @param envVars The input environment variables.
+ */
+export function updateEnvVars(existing: string[], envVars: KVPair): KVPair {
+  let existingKV: KVPair = {};
+  if (existing) {
+    for (const str of existing) {
+      const line = parseKVString(str);
+      existingKV = Object.assign(existingKV, line);
+    }
+  }
+
+  return Object.assign({}, existingKV, envVars);
 }
 
 // Execute this as the entrypoint when requested.

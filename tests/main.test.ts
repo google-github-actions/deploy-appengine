@@ -22,9 +22,9 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
-import { errorMessage } from '@google-github-actions/actions-utils';
+import { errorMessage, KVPair } from '@google-github-actions/actions-utils';
 
-import { run } from '../src/main';
+import { run, findAppYaml, updateEnvVars } from '../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -32,6 +32,7 @@ const fakeInputs: { [key: string]: string } = {
   working_directory: '',
   deliverables: 'example-app/app.yaml',
   image_url: '',
+  env_vars: '',
   version: '',
   promote: '',
   flags: '',
@@ -194,6 +195,113 @@ describe('#run', function () {
   });
 });
 
+describe('#findAppYaml', () => {
+  const cases: {
+    only?: boolean;
+    name: string;
+    list: string[];
+    expected?: string;
+    error?: string;
+  }[] = [
+    {
+      name: 'empty list',
+      list: [],
+      error: 'Could not find',
+    },
+    {
+      name: 'non-existent',
+      list: ['a', 'b', 'c'],
+      error: 'Could not find',
+    },
+    {
+      name: 'finds app.yml',
+      list: ['a', 'b', 'c', 'app.yml'],
+      expected: 'app.yml',
+    },
+    {
+      name: 'finds app.yaml',
+      list: ['a', 'b', 'c', 'app.yaml'],
+      expected: 'app.yaml',
+    },
+    {
+      name: 'finds nested',
+      list: ['foo/bar/app.yaml'],
+      expected: 'foo/bar/app.yaml',
+    },
+  ];
+
+  cases.forEach((tc) => {
+    const fn = tc.only ? it.only : it;
+    fn(tc.name, () => {
+      if (tc.error) {
+        expect(() => {
+          findAppYaml(tc.list);
+        }).to.throw(tc.error);
+      } else {
+        expect(findAppYaml(tc.list)).to.eql(tc.expected);
+      }
+    });
+  });
+});
+
+describe('#updateEnvVars', () => {
+  const cases: {
+    only?: boolean;
+    name: string;
+    existing: string[];
+    envVars: KVPair;
+    expected: KVPair;
+  }[] = [
+    {
+      name: 'empty existing, empty input',
+      existing: [],
+      envVars: {},
+      expected: {},
+    },
+    {
+      name: 'empty existing, given input',
+      existing: [],
+      envVars: {
+        FOO: 'bar',
+        ZIP: 'zap',
+      },
+      expected: {
+        FOO: 'bar',
+        ZIP: 'zap',
+      },
+    },
+    {
+      name: 'existing, given input',
+      existing: ['EXISTING=one'],
+      envVars: {
+        FOO: 'bar',
+        ZIP: 'zap',
+      },
+      expected: {
+        EXISTING: 'one',
+        FOO: 'bar',
+        ZIP: 'zap',
+      },
+    },
+    {
+      name: 'overwrites',
+      existing: ['FOO=bar'],
+      envVars: {
+        FOO: 'zip',
+      },
+      expected: {
+        FOO: 'zip',
+      },
+    },
+  ];
+
+  cases.forEach((tc) => {
+    const fn = tc.only ? it.only : it;
+    fn(tc.name, () => {
+      expect(updateEnvVars(tc.existing, tc.envVars)).to.eql(tc.expected);
+    });
+  });
+});
 async function expectError(fn: () => Promise<void>, want: string) {
   try {
     await fn();
