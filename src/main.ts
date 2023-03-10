@@ -122,7 +122,10 @@ export async function run(): Promise<void> {
     );
 
     // Modify app.yaml if envvars were given.
-    if (envVars || buildEnvVars) {
+    if (
+      (envVars && Object.keys(envVars).length > 0) ||
+      (buildEnvVars && Object.keys(buildEnvVars).length > 0)
+    ) {
       logDebug(`Updating env_variables or build_env_variables`);
 
       originalAppYamlPath = findAppYaml(deliverables);
@@ -300,16 +303,8 @@ export function findAppYaml(list: string[]): string {
  * @param existing The existing KEY=VALUE pairs to parse.
  * @param envVars The input environment variables.
  */
-export function updateEnvVars(existing: string[], envVars: KVPair): KVPair {
-  let existingKV: KVPair = {};
-  if (existing) {
-    for (const str of existing) {
-      const line = parseKVString(str);
-      existingKV = Object.assign(existingKV, line);
-    }
-  }
-
-  return Object.assign({}, existingKV, envVars);
+export function updateEnvVars(existing: KVPair, envVars: KVPair): KVPair {
+  return Object.assign({}, existing, envVars);
 }
 
 // Execute this as the entrypoint when requested.

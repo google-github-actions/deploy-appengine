@@ -18,6 +18,8 @@ import 'mocha';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
+import YAML from 'yaml';
+
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
@@ -248,19 +250,19 @@ describe('#updateEnvVars', () => {
   const cases: {
     only?: boolean;
     name: string;
-    existing: string[];
+    existing: KVPair;
     envVars: KVPair;
     expected: KVPair;
   }[] = [
     {
       name: 'empty existing, empty input',
-      existing: [],
+      existing: {},
       envVars: {},
       expected: {},
     },
     {
       name: 'empty existing, given input',
-      existing: [],
+      existing: {},
       envVars: {
         FOO: 'bar',
         ZIP: 'zap',
@@ -272,7 +274,9 @@ describe('#updateEnvVars', () => {
     },
     {
       name: 'existing, given input',
-      existing: ['EXISTING=one'],
+      existing: {
+        EXISTING: 'one',
+      },
       envVars: {
         FOO: 'bar',
         ZIP: 'zap',
@@ -285,7 +289,9 @@ describe('#updateEnvVars', () => {
     },
     {
       name: 'overwrites',
-      existing: ['FOO=bar'],
+      existing: {
+        FOO: 'bar',
+      },
       envVars: {
         FOO: 'zip',
       },
@@ -301,7 +307,32 @@ describe('#updateEnvVars', () => {
       expect(updateEnvVars(tc.existing, tc.envVars)).to.eql(tc.expected);
     });
   });
+
+  it('handles an yaml with variables', async () => {
+    const parsed = YAML.parse(`
+      env_variables:
+        FOO: 'bar'
+    `);
+
+    console.log(typeof parsed.env_variables);
+    const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
+    expect(result).to.eql({
+      FOO: 'bar',
+      ZIP: 'zap',
+    });
+  });
+
+  it('handles an yaml without variables', async () => {
+    const parsed = YAML.parse(`{}`);
+
+    console.log(typeof parsed.env_variables);
+    const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
+    expect(result).to.eql({
+      ZIP: 'zap',
+    });
+  });
 });
+
 async function expectError(fn: () => Promise<void>, want: string) {
   try {
     await fn();
