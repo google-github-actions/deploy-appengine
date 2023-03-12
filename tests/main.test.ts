@@ -19,14 +19,22 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 import YAML from 'yaml';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
-import { errorMessage, KVPair } from '@google-github-actions/actions-utils';
+import {
+  errorMessage,
+  forceRemove,
+  KVPair,
+  randomFilepath,
+  writeSecureFile,
+} from '@google-github-actions/actions-utils';
 
-import { run, findAppYaml, updateEnvVars } from '../src/main';
+import { run, findAppYaml, updateEnvVars, parseDeliverables } from '../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -198,49 +206,120 @@ describe('#run', function () {
 });
 
 describe('#findAppYaml', () => {
+  beforeEach(async function () {
+    this.parent = randomFilepath();
+    await fs.mkdir(this.parent, { recursive: true });
+  });
+
+  afterEach(async function () {
+    if (this.parent) {
+      forceRemove(this.parent);
+    }
+  });
+
   const cases: {
     only?: boolean;
     name: string;
-    list: string[];
+    files: Record<string, string>;
     expected?: string;
     error?: string;
   }[] = [
     {
-      name: 'empty list',
-      list: [],
-      error: 'Could not find',
+      name: 'no deployables',
+      files: {},
+      error: 'could not find an appyaml',
     },
     {
-      name: 'non-existent',
-      list: ['a', 'b', 'c'],
-      error: 'Could not find',
+      name: 'no appyaml single',
+      files: {
+        'my-file': `
+this is a file
+      `,
+      },
+      error: 'could not find an appyaml',
     },
     {
-      name: 'finds app.yml',
-      list: ['a', 'b', 'c', 'app.yml'],
-      expected: 'app.yml',
+      name: 'no appyaml multiple',
+      files: {
+        'my-file': `
+this is a file
+      `,
+        'my-other-file': `
+this is another file
+      `,
+      },
+      error: 'could not find an appyaml',
     },
     {
-      name: 'finds app.yaml',
-      list: ['a', 'b', 'c', 'app.yaml'],
+      name: 'single appyaml',
+      files: {
+        'app-dev.yaml': `
+runtime: 'node'
+service: 'my-service'
+      `,
+      },
+      expected: 'app-dev.yaml',
+    },
+    {
+      name: 'multiple files with appyaml',
+      files: {
+        'my-file': `
+this is a file
+      `,
+        'my-other-file': `
+this is another file
+      `,
+        'app-prod.yaml': `
+runtime: 'node'
+service: 'my-service'
+      `,
+      },
+      expected: 'app-prod.yaml',
+    },
+    {
+      name: 'multiple appyaml uses first',
+      files: {
+        'app.yaml': `
+runtime: 'node'
+service: 'my-service'
+      `,
+        'app-dev.yaml': `
+runtime: 'node'
+service: 'my-service'
+      `,
+        'app-prod.yaml': `
+runtime: 'node'
+service: 'my-service'
+      `,
+      },
       expected: 'app.yaml',
-    },
-    {
-      name: 'finds nested',
-      list: ['foo/bar/app.yaml'],
-      expected: 'foo/bar/app.yaml',
     },
   ];
 
   cases.forEach((tc) => {
     const fn = tc.only ? it.only : it;
-    fn(tc.name, () => {
+    fn(tc.name, async function () {
+      Object.keys(tc.files).map((key) => {
+        const newKey = path.join(this.parent, key);
+        tc.files[newKey] = tc.files[key];
+        delete tc.files[key];
+      });
+
+      await Promise.all(
+        Object.entries(tc.files).map(async ([pth, contents]) => {
+          await writeSecureFile(pth, contents);
+        }),
+      );
+
+      const filepaths = Object.keys(tc.files);
       if (tc.error) {
-        expect(() => {
-          findAppYaml(tc.list);
-        }).to.throw(tc.error);
-      } else {
-        expect(findAppYaml(tc.list)).to.eql(tc.expected);
+        expectError(async () => {
+          await findAppYaml(filepaths);
+        }, tc.error);
+      } else if (tc.expected) {
+        const expected = path.join(this.parent, tc.expected);
+        const result = await findAppYaml(filepaths);
+        expect(result).to.eql(expected);
       }
     });
   });
@@ -329,6 +408,53 @@ describe('#updateEnvVars', () => {
     const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
     expect(result).to.eql({
       ZIP: 'zap',
+    });
+  });
+});
+
+describe('#parseDeliverables', () => {
+  const cases: {
+    only?: boolean;
+    name: string;
+    input: string;
+    expected?: string[];
+  }[] = [
+    {
+      name: 'empty',
+      input: '',
+      expected: [],
+    },
+    {
+      name: 'single',
+      input: 'app.yaml',
+      expected: ['app.yaml'],
+    },
+    {
+      name: 'multi space',
+      input: 'app.yaml foo.yaml',
+      expected: ['app.yaml', 'foo.yaml'],
+    },
+    {
+      name: 'multi comma',
+      input: 'app.yaml, foo.yaml',
+      expected: ['app.yaml', 'foo.yaml'],
+    },
+    {
+      name: 'multi comma space',
+      input: 'app.yaml,foo.yaml,   bar.yaml',
+      expected: ['app.yaml', 'foo.yaml', 'bar.yaml'],
+    },
+    {
+      name: 'multi-line comma space',
+      input: 'app.yaml,\nfoo.yaml,   bar.yaml',
+      expected: ['app.yaml', 'foo.yaml', 'bar.yaml'],
+    },
+  ];
+
+  cases.forEach((tc) => {
+    const fn = tc.only ? it.only : it;
+    fn(tc.name, () => {
+      expect(parseDeliverables(tc.input)).to.eql(tc.expected);
     });
   });
 });
