@@ -45,6 +45,7 @@ import {
   isPinnedToHead,
   KVPair,
   parseBoolean,
+  parseCSV,
   parseFlags,
   parseKVString,
   pinnedToHeadWarning,
@@ -83,7 +84,7 @@ export async function run(): Promise<void> {
     // Get action inputs.
     const projectId = presence(getInput('project_id'));
     const cwd = presence(getInput('working_directory'));
-    const deliverables = (presence(getInput('deliverables')) || 'app.yaml').split(' ');
+    const deliverables = parseDeliverables(getInput('deliverables') || 'app.yaml');
     const buildEnvVars = parseKVString(getInput('build_env_vars'));
     const envVars = parseKVString(getInput('env_vars'));
     const imageUrl = presence(getInput('image_url'));
@@ -113,7 +114,7 @@ export async function run(): Promise<void> {
             .catch((err) => {
               const rejection =
                 `Deliverable ${deliverable} not found or the ` +
-                `caller does not have permission, check "working_direcotry" ` +
+                `caller does not have permission, check "working_directory" ` +
                 `and "deliverables" inputs: ${err}`;
               reject(new Error(rejection));
             });
@@ -128,7 +129,7 @@ export async function run(): Promise<void> {
     ) {
       logDebug(`Updating env_variables or build_env_variables`);
 
-      originalAppYamlPath = findAppYaml(deliverables);
+      originalAppYamlPath = await findAppYaml(deliverables);
       originalAppYamlContents = await fs.readFile(originalAppYamlPath, 'utf8');
       const parsed = YAML.parse(originalAppYamlContents);
 
@@ -277,22 +278,31 @@ async function computeGcloudVersion(str: string): Promise<string> {
 
 /**
  * findAppYaml finds the best app.yaml or app.yml file in the list of
- * deliverables. It returns a tuple of the index and the path. If no file is
- * found, it throws an error.
+ * deliverables. It returns the file's path. If no file is found, it throws an
+ * error.
  *
- * @return [number, string]
+ * @return [string]
  */
-export function findAppYaml(list: string[]): string {
-  const idx = list.findIndex((item) => {
-    return item.endsWith('app.yml') || item.endsWith('app.yaml');
-  });
+export async function findAppYaml(list: string[]): Promise<string> {
+  for (let i = 0; i < list.length; i++) {
+    const pth = list[i];
 
-  const pth = list[idx];
-  if (!pth) {
-    throw new Error(`Could not find "app.yml" file`);
+    try {
+      const contents = await fs.readFile(pth, 'utf8');
+      const parsed = YAML.parse(contents);
+
+      // Per https://cloud.google.com/appengine/docs/standard/reference/app-yaml,
+      // the only required fields are "runtime" and "service".
+      if (parsed && parsed['runtime'] && parsed['service']) {
+        return pth;
+      }
+    } catch (err) {
+      const msg = errorMessage(err);
+      logDebug(`Failed to parse ${pth} as YAML: ${msg}`);
+    }
   }
 
-  return pth;
+  throw new Error(`Could not find an appyaml in [${list.join(', ')}]`);
 }
 
 /**
@@ -305,6 +315,32 @@ export function findAppYaml(list: string[]): string {
  */
 export function updateEnvVars(existing: KVPair, envVars: KVPair): KVPair {
   return Object.assign({}, existing, envVars);
+}
+
+/**
+ * parseDeliverables parses the given input string as a space-separated or
+ * comma-separated list of deliverables.
+ *
+ * @param input The given input
+ * @return [string[]]
+ */
+export function parseDeliverables(input: string): string[] {
+  const onSpaces = input.split(' ');
+
+  const final: string[] = [];
+  for (let i = 0; i < onSpaces.length; i++) {
+    const entry = onSpaces[i].trim();
+    if (entry !== '') {
+      const entries = parseCSV(entry);
+      for (let j = 0; j < entries.length; j++) {
+        const csvEntry = entries[j];
+        if (csvEntry !== '') {
+          final.push(csvEntry);
+        }
+      }
+    }
+  }
+  return final;
 }
 
 // Execute this as the entrypoint when requested.
