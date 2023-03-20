@@ -255,7 +255,6 @@ this is another file
       files: {
         'app-dev.yaml': `
 runtime: 'node'
-service: 'my-service'
       `,
       },
       expected: 'app-dev.yaml',
@@ -271,7 +270,6 @@ this is another file
       `,
         'app-prod.yaml': `
 runtime: 'node'
-service: 'my-service'
       `,
       },
       expected: 'app-prod.yaml',
@@ -286,10 +284,12 @@ service: 'my-service'
         'app-dev.yaml': `
 runtime: 'node'
 service: 'my-service'
+env: 'flex'
       `,
         'app-prod.yaml': `
 runtime: 'node'
 service: 'my-service'
+env: 'standard'
       `,
       },
       expected: 'app.yaml',

@@ -292,8 +292,8 @@ export async function findAppYaml(list: string[]): Promise<string> {
       const parsed = YAML.parse(contents);
 
       // Per https://cloud.google.com/appengine/docs/standard/reference/app-yaml,
-      // the only required fields are "runtime" and "service".
-      if (parsed && parsed['runtime'] && parsed['service']) {
+      // the only required field is "runtime".
+      if (parsed && parsed['runtime']) {
         return pth;
       }
     } catch (err) {
