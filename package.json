@@ -27,7 +27,7 @@
     "@actions/exec": "^1.1.1",
     "@google-github-actions/actions-utils": "^0.4.7",
     "@google-github-actions/setup-cloud-sdk": "^1.1.1",
-    "yaml": "^2.2.1"
+    "yaml": "^2.2.2"
   },
   "devDependencies": {
     "@types/chai": "^4.3.x",
