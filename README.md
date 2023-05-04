@@ -4,6 +4,12 @@ This action deploys your source code to [App Engine][gae] and makes the URL
 available to later build steps via outputs. This allows you to parameterize your
 App Engine deployments.
 
+**This is not an officially supported Google product, and it is not covered by a
+Google Cloud support contract. To report bugs or request features in a Google
+Cloud product, please contact [Google Cloud
+support](https://cloud.google.com/support).**
+
+
 ## Prerequisites
 
 -   This action requires Google Cloud credentials that are authorized to deploy
