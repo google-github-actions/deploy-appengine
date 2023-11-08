@@ -192,7 +192,7 @@ describe('#run', function () {
     expect(
       setOutput.calledWith('name', 'apps/my-project/services/default/versions/20221215t102539'),
     ).to.be.ok;
-    expect(setOutput.calledWith('runtime', 'nodejs16')).to.be.ok;
+    expect(setOutput.calledWith('runtime', 'nodejs20')).to.be.ok;
     expect(setOutput.calledWith('service_account_email', 'my-project@appspot.gserviceaccount.com'))
       .to.be.ok;
     expect(setOutput.calledWith('serving_status', 'SERVING')).to.be.ok;
@@ -505,7 +505,7 @@ const testDescribeResponse = `
   "instanceClass": "F1",
   "name": "apps/my-project/services/default/versions/20221215t102539",
   "network": {},
-  "runtime": "nodejs16",
+  "runtime": "nodejs20",
   "runtimeChannel": "default",
   "serviceAccount": "my-project@appspot.gserviceaccount.com",
   "servingStatus": "SERVING",
