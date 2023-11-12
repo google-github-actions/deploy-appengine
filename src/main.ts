@@ -93,6 +93,7 @@ export async function run(): Promise<void> {
     const flags = presence(getInput('flags'));
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component'));
+    const noCache = parseBoolean(getInput('no_cache'));
 
     // Validate gcloud component input
     if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
@@ -167,6 +168,10 @@ export async function run(): Promise<void> {
       appDeployCmd.push('--promote');
     } else {
       appDeployCmd.push('--no-promote');
+    }
+
+    if (noCache) {
+      appDeployCmd.push('--no-cache');
     }
 
     // Add optional flags
