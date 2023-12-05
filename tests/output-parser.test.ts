@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
 import {
   parseDeployResponse,
@@ -24,9 +24,8 @@ import {
   DescribeResponse,
 } from '../src/output-parser';
 
-describe('#parseDeployResponse', () => {
+describe('#parseDeployResponse', async () => {
   const cases: {
-    only?: boolean;
     name: string;
     stdout: string | undefined;
     error?: string;
@@ -218,22 +217,21 @@ describe('#parseDeployResponse', () => {
   ];
 
   cases.forEach((tc) => {
-    const fn = tc.only ? it.only : it;
-    fn(tc.name, () => {
+    it(tc.name, async () => {
       if (tc.error) {
-        expect(() => {
+        assert.throws(() => {
           parseDeployResponse(tc.stdout);
-        }).to.throw(tc.error);
+        }, tc.error);
       } else {
-        expect(parseDeployResponse(tc.stdout)).to.eql(tc.expected);
+        const result = parseDeployResponse(tc.stdout);
+        assert.deepStrictEqual(result, tc.expected);
       }
     });
   });
 });
 
-describe('#parseDescribeResponse', () => {
+describe('#parseDescribeResponse', async () => {
   const cases: {
-    only?: boolean;
     name: string;
     stdout: string | undefined;
     error?: string;
@@ -299,14 +297,14 @@ describe('#parseDescribeResponse', () => {
   ];
 
   cases.forEach((tc) => {
-    const fn = tc.only ? it.only : it;
-    fn(tc.name, () => {
+    it(tc.name, () => {
       if (tc.error) {
-        expect(() => {
+        assert.throws(() => {
           parseDescribeResponse(tc.stdout);
-        }).to.throw(tc.error);
+        }, tc.error);
       } else {
-        expect(parseDescribeResponse(tc.stdout)).to.eql(tc.expected);
+        const result = parseDescribeResponse(tc.stdout);
+        assert.deepStrictEqual(result, tc.expected);
       }
     });
   });

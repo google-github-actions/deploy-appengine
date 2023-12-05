@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build -m src/main.ts",
-    "lint": "eslint src/ tests/ --ext .ts,.tsx",
-    "format": "eslint src/ tests/ --ext .ts,.tsx --fix",
-    "test": "mocha -r ts-node/register -t 600s 'tests/*.test.ts' --exit"
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write **/*.ts",
+    "test": "node --require ts-node/register --test-reporter spec --test tests/main.test.ts tests/output-parser.test.ts"
   },
   "repository": {
     "type": "git",
@@ -25,26 +25,20 @@
   "dependencies": {
     "@actions/core": "^1.10.1",
     "@actions/exec": "^1.1.1",
-    "@google-github-actions/actions-utils": "^0.4.9",
+    "@google-github-actions/actions-utils": "^0.4.10",
     "@google-github-actions/setup-cloud-sdk": "^1.1.3",
     "yaml": "^2.3.4"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.x",
-    "@types/mocha": "^10.0.4",
-    "@types/node": "^20.9.0",
-    "@types/sinon": "^17.0.1",
-    "@typescript-eslint/eslint-plugin": "^6.10.0",
-    "@typescript-eslint/parser": "^6.10.0",
+    "@types/node": "^20.10.3",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
     "@vercel/ncc": "^0.38.1",
-    "chai": "^4.3.x",
-    "eslint": "^8.53.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.x",
-    "mocha": "^10.2.0",
-    "prettier": "^3.0.3",
-    "sinon": "^17.0.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.2"
   }
 }

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
-import * as sinon from 'sinon';
+import { afterEach, beforeEach, describe, mock, it } from 'node:test';
+import assert from 'node:assert';
 
 import YAML from 'yaml';
 import * as path from 'path';
@@ -27,7 +26,6 @@ import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 import {
-  errorMessage,
   forceRemove,
   KVPair,
   randomFilepath,
@@ -35,9 +33,10 @@ import {
 } from '@google-github-actions/actions-utils';
 
 import { run, findAppYaml, updateEnvVars, parseDeliverables } from '../src/main';
+import * as outputParser from '../src/output-parser';
 
 // These are mock data for github actions inputs, where camel case is expected.
-const fakeInputs: { [key: string]: string } = {
+const fakeInputs = {
   project_id: '',
   working_directory: '',
   deliverables: 'example-app/app.yaml',
@@ -48,177 +47,240 @@ const fakeInputs: { [key: string]: string } = {
   flags: '',
 };
 
-function getInputMock(name: string): string {
-  return fakeInputs[name];
-}
+const defaultMocks = (
+  m: typeof mock,
+  overrideInputs?: Record<string, string>,
+): Record<string, any> => {
+  const inputs = Object.assign({}, fakeInputs, overrideInputs);
+  return {
+    startGroup: m.method(core, 'startGroup', () => {}),
+    endGroup: m.method(core, 'endGroup', () => {}),
+    group: m.method(core, 'group', () => {}),
+    logDebug: m.method(core, 'debug', () => {}),
+    logError: m.method(core, 'error', () => {}),
+    logInfo: m.method(core, 'info', () => {}),
+    logNotice: m.method(core, 'notice', () => {}),
+    logWarning: m.method(core, 'warning', () => {}),
+    exportVariable: m.method(core, 'exportVariable', () => {}),
+    setSecret: m.method(core, 'setSecret', () => {}),
+    addPath: m.method(core, 'addPath', () => {}),
+    setOutput: m.method(core, 'setOutput', () => {}),
+    setFailed: m.method(core, 'setFailed', (msg: string) => {
+      throw new Error(msg);
+    }),
+    getBooleanInput: m.method(core, 'getBooleanInput', (name: string) => {
+      return !!inputs[name];
+    }),
+    getMultilineInput: m.method(core, 'getMultilineInput', (name: string) => {
+      return inputs[name];
+    }),
+    getInput: m.method(core, 'getInput', (name: string) => {
+      return inputs[name];
+    }),
 
-describe('#run', function () {
-  beforeEach(async function () {
+    authenticateGcloudSDK: m.method(setupGcloud, 'authenticateGcloudSDK', () => {}),
+    isInstalled: m.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    }),
+    installGcloudSDK: m.method(setupGcloud, 'installGcloudSDK', async () => {
+      return '1.2.3';
+    }),
+    installComponent: m.method(setupGcloud, 'installComponent', () => {}),
+    getLatestGcloudSDKVersion: m.method(setupGcloud, 'getLatestGcloudSDKVersion', () => {
+      return '1.2.3';
+    }),
+
+    getExecOutput: m.method(exec, 'getExecOutput', async () => {
+      return {
+        exitCode: 0,
+        stderr: '',
+        stdout: '{}',
+      };
+    }),
+
+    parseDeployResponse: m.method(outputParser, 'parseDeployResponse', async () => {
+      return {
+        exitCode: 0,
+        stderr: '',
+        name: 'a',
+        link: 'b',
+      };
+    }),
+
+    parseDescribeResponse: m.method(outputParser, 'parseDescribeResponse', async () => {
+      return {
+        exitCode: 0,
+        stderr: '',
+        name: 'a',
+        link: 'b',
+      };
+    }),
+  };
+};
+
+describe('#run', async () => {
+  beforeEach(async () => {
     await TestToolCache.start();
-
-    this.stubs = {
-      getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
-      exportVariable: sinon.stub(core, 'exportVariable'),
-      setOutput: sinon.stub(core, 'setOutput'),
-      authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-      getLatestGcloudSDKVersion: sinon
-        .stub(setupGcloud, 'getLatestGcloudSDKVersion')
-        .resolves('1.2.3'),
-      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
-      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
-      installComponent: sinon.stub(setupGcloud, 'installComponent'),
-      getExecOutput: sinon
-        .stub(exec, 'getExecOutput')
-        .onFirstCall()
-        .resolves({ exitCode: 0, stderr: '', stdout: testDeployResponse })
-        .onSecondCall()
-        .resolves({ exitCode: 0, stderr: '', stdout: testDescribeResponse }),
-    };
-
-    sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
-    sinon.stub(core, 'addPath').callsFake(sinon.fake());
-    sinon.stub(core, 'debug').callsFake(sinon.fake());
-    sinon.stub(core, 'endGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'info').callsFake(sinon.fake());
-    sinon.stub(core, 'startGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'warning').callsFake(sinon.fake());
   });
 
-  afterEach(async function () {
-    Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
-    sinon.restore();
-
+  afterEach(async () => {
     await TestToolCache.stop();
   });
 
-  it('installs the gcloud SDK if it is not already installed', async function () {
-    this.stubs.isInstalled.returns(false);
-    await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
-  });
+  it('installs the gcloud SDK if it is not already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return false;
+    });
 
-  it('uses the cached gcloud SDK if it was already installed', async function () {
-    this.stubs.isInstalled.returns(true);
-    await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
-  });
-
-  it('uses default components without gcloud_component flag', async function () {
-    await run();
-    expect(this.stubs.installComponent.callCount).to.eq(0);
-  });
-
-  it('throws error with invalid gcloud component flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
-    await expectError(run, 'invalid value for gcloud_component: wrong_value');
-  });
-
-  it('installs alpha component with alpha flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
-    await run();
-    expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
-  });
-
-  it('installs beta component with beta flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('beta');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-  });
-
-  it('sets project if provided', async function () {
-    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
     await run();
 
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--project', 'my-test-project']);
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 1);
   });
 
-  it('sets image-url if provided', async function () {
-    this.stubs.getInput.withArgs('image_url').returns('gcr.io/foo/bar');
+  it('uses the cached gcloud SDK if it was already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    });
+
     await run();
 
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--image-url', 'gcr.io/foo/bar']);
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 0);
   });
 
-  it('sets version if provided', async function () {
-    this.stubs.getInput.withArgs('version').returns('123');
+  it('uses default components without gcloud_component flag', async (t) => {
+    const mocks = defaultMocks(t.mock);
     await run();
-
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--version', '123']);
+    assert.deepStrictEqual(mocks.installComponent.mock.callCount(), 0);
   });
 
-  it('sets promote if provided', async function () {
-    this.stubs.getInput.withArgs('promote').returns('true');
-    await run();
-
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--promote']);
+  it('throws error with invalid gcloud component flag', async (t) => {
+    defaultMocks(t.mock, {
+      gcloud_component: 'wrong_value',
+    });
+    assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
   });
 
-  it('sets no-promote if not provided', async function () {
-    this.stubs.getInput.withArgs('promote').returns('false');
+  it('installs alpha component with alpha flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'alpha',
+    });
+
     await run();
 
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--no-promote']);
+    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
   });
 
-  it('sets flags if provided', async function () {
-    this.stubs.getInput.withArgs('flags').returns('--log-http   --foo=bar');
+  it('installs beta component with beta flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'beta',
+    });
+
     await run();
 
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--log-http', '--foo', 'bar']);
+    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
   });
 
-  it('sets outputs', async function () {
+  it('sets project if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      project_id: 'my-test-project',
+    });
+
     await run();
 
-    const setOutput = this.stubs.setOutput;
-    expect(
-      setOutput.calledWith('name', 'apps/my-project/services/default/versions/20221215t102539'),
-    ).to.be.ok;
-    expect(setOutput.calledWith('runtime', 'nodejs20')).to.be.ok;
-    expect(setOutput.calledWith('service_account_email', 'my-project@appspot.gserviceaccount.com'))
-      .to.be.ok;
-    expect(setOutput.calledWith('serving_status', 'SERVING')).to.be.ok;
-    expect(setOutput.calledWith('version_id', '20221215t102539')).to.be.ok;
-    expect(
-      setOutput.calledWith('version_url', 'https://20221215t102539-dot-my-project.appspot.com'),
-    ).to.be.ok;
-    expect(setOutput.calledWith('url', 'https://20221215t102539-dot-my-project.appspot.com')).to.be
-      .ok;
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--project',
+      'my-test-project',
+    ]);
+  });
+
+  it('sets image-url if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      image_url: 'gcr.io/foo/bar',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--image-url',
+      'gcr.io/foo/bar',
+    ]);
+  });
+
+  it('sets version if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      version: '123',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--version', '123']);
+  });
+
+  it('sets promote if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      promote: 'true',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--promote']);
+  });
+
+  it('sets no-promote if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      promote: 'false',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--no-promote']);
+  });
+
+  it('sets flags if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      flags: '--log-http   --foo=bar',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--log-http',
+      '--foo',
+      'bar',
+    ]);
+  });
+
+  it('sets outputs', async (t) => {
+    const mocks = defaultMocks(t.mock);
+
+    t.mock.method(outputParser, 'parseDescribeResponse', () => {
+      return {
+        name: 'test-name',
+      };
+    });
+
+    await run();
+
+    const args = mocks.setOutput.mock.calls[0].arguments;
+    assert.deepStrictEqual(args, ['name', 'test-name']);
   });
 });
 
-describe('#findAppYaml', () => {
-  beforeEach(async function () {
-    this.parent = randomFilepath();
-    await fs.mkdir(this.parent, { recursive: true });
+describe('#findAppYaml', async () => {
+  let parent: string;
+
+  beforeEach(async () => {
+    parent = randomFilepath();
+    await fs.mkdir(parent, { recursive: true });
   });
 
-  afterEach(async function () {
-    if (this.parent) {
-      forceRemove(this.parent);
-    }
+  afterEach(async () => {
+    forceRemove(parent);
   });
 
   const cases: {
-    only?: boolean;
     name: string;
     files: Record<string, string>;
     expected?: string;
@@ -297,10 +359,9 @@ env: 'standard'
   ];
 
   cases.forEach((tc) => {
-    const fn = tc.only ? it.only : it;
-    fn(tc.name, async function () {
+    it(tc.name, async () => {
       Object.keys(tc.files).map((key) => {
-        const newKey = path.join(this.parent, key);
+        const newKey = path.join(parent, key);
         tc.files[newKey] = tc.files[key];
         delete tc.files[key];
       });
@@ -313,21 +374,20 @@ env: 'standard'
 
       const filepaths = Object.keys(tc.files);
       if (tc.error) {
-        expectError(async () => {
+        assert.rejects(async () => {
           await findAppYaml(filepaths);
         }, tc.error);
       } else if (tc.expected) {
-        const expected = path.join(this.parent, tc.expected);
+        const expected = path.join(parent, tc.expected);
         const result = await findAppYaml(filepaths);
-        expect(result).to.eql(expected);
+        assert.deepStrictEqual(result, expected);
       }
     });
   });
 });
 
-describe('#updateEnvVars', () => {
+describe('#updateEnvVars', async () => {
   const cases: {
-    only?: boolean;
     name: string;
     existing: KVPair;
     envVars: KVPair;
@@ -381,9 +441,9 @@ describe('#updateEnvVars', () => {
   ];
 
   cases.forEach((tc) => {
-    const fn = tc.only ? it.only : it;
-    fn(tc.name, () => {
-      expect(updateEnvVars(tc.existing, tc.envVars)).to.eql(tc.expected);
+    it(tc.name, async () => {
+      const result = updateEnvVars(tc.existing, tc.envVars);
+      assert.deepStrictEqual(result, tc.expected);
     });
   });
 
@@ -393,9 +453,8 @@ describe('#updateEnvVars', () => {
         FOO: 'bar'
     `);
 
-    console.log(typeof parsed.env_variables);
     const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
-    expect(result).to.eql({
+    assert.deepStrictEqual(result, {
       FOO: 'bar',
       ZIP: 'zap',
     });
@@ -404,17 +463,15 @@ describe('#updateEnvVars', () => {
   it('handles an yaml without variables', async () => {
     const parsed = YAML.parse(`{}`);
 
-    console.log(typeof parsed.env_variables);
     const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
-    expect(result).to.eql({
+    assert.deepStrictEqual(result, {
       ZIP: 'zap',
     });
   });
 });
 
-describe('#parseDeliverables', () => {
+describe('#parseDeliverables', async () => {
   const cases: {
-    only?: boolean;
     name: string;
     input: string;
     expected?: string[];
@@ -452,64 +509,33 @@ describe('#parseDeliverables', () => {
   ];
 
   cases.forEach((tc) => {
-    const fn = tc.only ? it.only : it;
-    fn(tc.name, () => {
-      expect(parseDeliverables(tc.input)).to.eql(tc.expected);
+    it(tc.name, async () => {
+      const result = parseDeliverables(tc.input);
+      assert.deepStrictEqual(result, tc.expected);
     });
   });
 });
 
-async function expectError(fn: () => Promise<void>, want: string) {
-  try {
-    await fn();
-    throw new Error(`expected error`);
-  } catch (err) {
-    const msg = errorMessage(err);
-    expect(msg).to.include(want);
-  }
-}
+const expectSubArray = (m: string[], exp: string[]) => {
+  const window = exp.length;
+  for (let i = 0; i < m.length; i++) {
+    const x = m.slice(i, i + window);
 
-const testDeployResponse = `
-{
-  "configs": [],
-  "versions": [
-    {
-      "environment": null,
-      "id": "123",
-      "last_deployed_time": null,
-      "project": "my-project",
-      "service": "default",
-      "service_account": null,
-      "traffic_split": null,
-      "version": null
-    }
-  ]
-}
-`;
-
-const testDescribeResponse = `
-{
-  "createTime": "2022-12-15T15:26:11Z",
-  "createdBy": "foo@bar.com",
-  "deployment": {
-    "files": {
-      "app.yaml": {
-        "sha1Sum": "84a6883be145d40d7f34901050f403f51faba608",
-        "sourceUrl": "https://storage.googleapis.com/staging.my-project.appspot.com/84a6883be145d40d7f34901050f403f51faba608"
+    let matches = true;
+    for (let j = 0; j < exp.length; j++) {
+      if (x[j] !== exp[j]) {
+        matches = false;
       }
     }
-  },
-  "diskUsageBytes": "4288402",
-  "env": "standard",
-  "id": "20221215t102539",
-  "instanceClass": "F1",
-  "name": "apps/my-project/services/default/versions/20221215t102539",
-  "network": {},
-  "runtime": "nodejs20",
-  "runtimeChannel": "default",
-  "serviceAccount": "my-project@appspot.gserviceaccount.com",
-  "servingStatus": "SERVING",
-  "threadsafe": true,
-  "versionUrl": "https://20221215t102539-dot-my-project.appspot.com"
-}
-`;
+    if (matches) {
+      return true;
+    }
+  }
+
+  throw new assert.AssertionError({
+    message: 'mismatch',
+    actual: m,
+    expected: exp,
+    operator: 'subArray',
+  });
+};
