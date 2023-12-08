@@ -17,6 +17,7 @@
 import fs from 'fs';
 
 import {
+  error as logError,
   getInput,
   exportVariable,
   info as logInfo,
@@ -65,6 +66,17 @@ export function setUrlOutput(output: string): string | undefined {
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
+  // v0 is deprecated and is no longer supported per our "two major versions"
+  // policy.
+  logError(
+    `The v0 series of google-github-actions/deploy-appengine is no longer ` +
+      `maintained. It will not receive updates, improvements, or security ` +
+      `patches. Please upgrade to the latest supported versions: ` +
+      `\n` +
+      `\n` +
+      `    https://github.com/google-github-actions/deploy-appengine`,
+  );
+
   try {
     // Register metrics
     exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
