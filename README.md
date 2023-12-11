@@ -31,13 +31,13 @@ jobs:
 
     steps:
     - id: 'auth'
-      uses: 'google-github-actions/auth@v1'
+      uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v1'
+      uses: 'google-github-actions/deploy-appengine@v2'
 
     # Example of using the output
     - id: 'test'
@@ -178,13 +178,13 @@ jobs:
 
     steps:
     - id: 'auth'
-      uses: 'google-github-actions/auth@v1'
+      uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v1'
+      uses: 'google-github-actions/deploy-appengine@v2'
 ```
 
 ### Via Application Default Credentials
@@ -199,7 +199,7 @@ jobs:
   job_id:
     steps:
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v1'
+      uses: 'google-github-actions/deploy-appengine@v2'
 ```
 
 ## Advanced Configuration
@@ -217,7 +217,7 @@ minutes.
 jobs:
   job_id:
     steps:
-    - uses: 'google-github-actions/deploy-appengine@v1'
+    - uses: 'google-github-actions/deploy-appengine@v2'
       env:
         CLOUDSDK_APP_CLOUD_BUILD_TIMEOUT: 1800 # 30 minutes
 ```
