@@ -60,6 +60,10 @@ import { parseDeployResponse, parseDescribeResponse } from './output-parser';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
+// isDebug returns true if runner debugging or step debugging is enabled.
+const isDebug =
+  parseBoolean(process.env.ACTIONS_RUNNER_DEBUG) || parseBoolean(process.env.ACTIONS_STEP_DEBUG);
+
 // originalAppYamlContents and originalAppYamlPath is a reference to the
 // original app.yaml contents and path.
 let originalAppYamlContents: string, originalAppYamlPath: string;
@@ -198,7 +202,7 @@ export async function run(): Promise<void> {
       logWarning('No authentication found, authenticate with `google-github-actions/auth`.');
     }
 
-    const options = { silent: true, ignoreReturnCode: true };
+    const options = { silent: !isDebug, ignoreReturnCode: true };
     const deployCommandString = `${toolCommand} ${appDeployCmd.join(' ')}`;
     logInfo(`Running: ${deployCommandString}`);
 
