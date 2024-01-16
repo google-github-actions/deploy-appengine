@@ -41,7 +41,7 @@ jobs:
 
     # Example of using the output
     - id: 'test'
-      run: 'curl "${{ steps.deploy.outputs.url }}"'
+      run: 'curl "${{ steps.deploy.outputs.version_url }}"'
 ```
 
 ## Inputs
