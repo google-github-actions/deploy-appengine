@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-import { describe, it } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert';
 
-import {
-  parseDeployResponse,
-  DeployResponse,
-  parseDescribeResponse,
-  DescribeResponse,
-} from '../src/output-parser';
+import { parseDeployResponse, parseDescribeResponse } from '../src/output-parser';
 
-describe('#parseDeployResponse', async () => {
-  const cases: {
-    name: string;
-    stdout: string | undefined;
-    error?: string;
-    expected?: DeployResponse | null;
-  }[] = [
+test('#parseDeployResponse', { concurrency: true }, async (suite) => {
+  const cases = [
     {
       name: 'with promote',
       stdout: `
@@ -216,8 +206,8 @@ describe('#parseDeployResponse', async () => {
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, async () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
       if (tc.error) {
         assert.throws(() => {
           parseDeployResponse(tc.stdout);
@@ -227,16 +217,11 @@ describe('#parseDeployResponse', async () => {
         assert.deepStrictEqual(result, tc.expected);
       }
     });
-  });
+  }
 });
 
-describe('#parseDescribeResponse', async () => {
-  const cases: {
-    name: string;
-    stdout: string | undefined;
-    error?: string;
-    expected?: DescribeResponse | null;
-  }[] = [
+test('#parseDescribeResponse', { concurrency: true }, async (suite) => {
+  const cases = [
     {
       name: 'with response',
       stdout: `
@@ -296,8 +281,8 @@ describe('#parseDescribeResponse', async () => {
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, () => {
       if (tc.error) {
         assert.throws(() => {
           parseDescribeResponse(tc.stdout);
@@ -307,5 +292,5 @@ describe('#parseDescribeResponse', async () => {
         assert.deepStrictEqual(result, tc.expected);
       }
     });
-  });
+  }
 });

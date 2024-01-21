@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, mock, it } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert';
 
 import YAML from 'yaml';
@@ -26,6 +26,7 @@ import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 import {
+  assertMembers,
   forceRemove,
   KVPair,
   randomFilepath,
@@ -118,16 +119,16 @@ const defaultMocks = (
   };
 };
 
-describe('#run', async () => {
-  beforeEach(async () => {
+test('#run', { concurrency: true }, async (suite) => {
+  suite.beforeEach(async () => {
     await TestToolCache.start();
   });
 
-  afterEach(async () => {
+  suite.afterEach(async () => {
     await TestToolCache.stop();
   });
 
-  it('installs the gcloud SDK if it is not already installed', async (t) => {
+  await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
     const mocks = defaultMocks(t.mock);
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return false;
@@ -138,7 +139,7 @@ describe('#run', async () => {
     assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 1);
   });
 
-  it('uses the cached gcloud SDK if it was already installed', async (t) => {
+  await suite.test('uses the cached gcloud SDK if it was already installed', async (t) => {
     const mocks = defaultMocks(t.mock);
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return true;
@@ -149,110 +150,110 @@ describe('#run', async () => {
     assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 0);
   });
 
-  it('uses default components without gcloud_component flag', async (t) => {
+  await suite.test('uses default components without gcloud_component flag', async (t) => {
     const mocks = defaultMocks(t.mock);
     await run();
     assert.deepStrictEqual(mocks.installComponent.mock.callCount(), 0);
   });
 
-  it('throws error with invalid gcloud component flag', async (t) => {
+  await suite.test('throws error with invalid gcloud component flag', async (t) => {
     defaultMocks(t.mock, {
       gcloud_component: 'wrong_value',
     });
-    assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
+    await assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
   });
 
-  it('installs alpha component with alpha flag', async (t) => {
+  await suite.test('installs alpha component with alpha flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
       gcloud_component: 'alpha',
     });
 
     await run();
 
-    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
+    assertMembers(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
   });
 
-  it('installs beta component with beta flag', async (t) => {
+  await suite.test('installs beta component with beta flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
       gcloud_component: 'beta',
     });
 
     await run();
 
-    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
+    assertMembers(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
   });
 
-  it('sets project if given', async (t) => {
+  await suite.test('sets project if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       project_id: 'my-test-project',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--project',
       'my-test-project',
     ]);
   });
 
-  it('sets image-url if given', async (t) => {
+  await suite.test('sets image-url if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       image_url: 'gcr.io/foo/bar',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--image-url',
       'gcr.io/foo/bar',
     ]);
   });
 
-  it('sets version if given', async (t) => {
+  await suite.test('sets version if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       version: '123',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--version', '123']);
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--version', '123']);
   });
 
-  it('sets promote if given', async (t) => {
+  await suite.test('sets promote if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       promote: 'true',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--promote']);
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--promote']);
   });
 
-  it('sets no-promote if given', async (t) => {
+  await suite.test('sets no-promote if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       promote: 'false',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--no-promote']);
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--no-promote']);
   });
 
-  it('sets flags if given', async (t) => {
+  await suite.test('sets flags if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       flags: '--log-http   --foo=bar',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--log-http',
       '--foo',
       'bar',
     ]);
   });
 
-  it('sets outputs', async (t) => {
+  await suite.test('sets outputs', async (t) => {
     const mocks = defaultMocks(t.mock);
 
     t.mock.method(outputParser, 'parseDescribeResponse', () => {
@@ -268,15 +269,15 @@ describe('#run', async () => {
   });
 });
 
-describe('#findAppYaml', async () => {
+test('#findAppYaml', { concurrency: true }, async (suite) => {
   let parent: string;
 
-  beforeEach(async () => {
+  suite.beforeEach(async () => {
     parent = randomFilepath();
     await fs.mkdir(parent, { recursive: true });
   });
 
-  afterEach(async () => {
+  suite.afterEach(async () => {
     forceRemove(parent);
   });
 
@@ -358,8 +359,8 @@ env: 'standard'
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, async () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
       Object.keys(tc.files).map((key) => {
         const newKey = path.join(parent, key);
         tc.files[newKey] = tc.files[key];
@@ -374,7 +375,7 @@ env: 'standard'
 
       const filepaths = Object.keys(tc.files);
       if (tc.error) {
-        assert.rejects(async () => {
+        await assert.rejects(async () => {
           await findAppYaml(filepaths);
         }, tc.error);
       } else if (tc.expected) {
@@ -383,10 +384,10 @@ env: 'standard'
         assert.deepStrictEqual(result, expected);
       }
     });
-  });
+  }
 });
 
-describe('#updateEnvVars', async () => {
+test('#updateEnvVars', { concurrency: true }, async (suite) => {
   const cases: {
     name: string;
     existing: KVPair;
@@ -440,14 +441,14 @@ describe('#updateEnvVars', async () => {
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, async () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
       const result = updateEnvVars(tc.existing, tc.envVars);
       assert.deepStrictEqual(result, tc.expected);
     });
-  });
+  }
 
-  it('handles an yaml with variables', async () => {
+  await suite.test('handles an yaml with variables', async () => {
     const parsed = YAML.parse(`
       env_variables:
         FOO: 'bar'
@@ -460,7 +461,7 @@ describe('#updateEnvVars', async () => {
     });
   });
 
-  it('handles an yaml without variables', async () => {
+  await suite.test('handles an yaml without variables', async () => {
     const parsed = YAML.parse(`{}`);
 
     const result = updateEnvVars(parsed.env_variables, { ZIP: 'zap' });
@@ -470,12 +471,8 @@ describe('#updateEnvVars', async () => {
   });
 });
 
-describe('#parseDeliverables', async () => {
-  const cases: {
-    name: string;
-    input: string;
-    expected?: string[];
-  }[] = [
+test('#parseDeliverables', { concurrency: true }, async (suite) => {
+  const cases = [
     {
       name: 'empty',
       input: '',
@@ -508,34 +505,10 @@ describe('#parseDeliverables', async () => {
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, async () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
       const result = parseDeliverables(tc.input);
       assert.deepStrictEqual(result, tc.expected);
     });
-  });
-});
-
-const expectSubArray = (m: string[], exp: string[]) => {
-  const window = exp.length;
-  for (let i = 0; i < m.length; i++) {
-    const x = m.slice(i, i + window);
-
-    let matches = true;
-    for (let j = 0; j < exp.length; j++) {
-      if (x[j] !== exp[j]) {
-        matches = false;
-      }
-    }
-    if (matches) {
-      return true;
-    }
   }
-
-  throw new assert.AssertionError({
-    message: 'mismatch',
-    actual: m,
-    expected: exp,
-    operator: 'subArray',
-  });
-};
+});
