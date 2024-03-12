@@ -155,6 +155,8 @@ There are a few ways to authenticate this action. The caller must have the follo
 -   Cloud Build Editor (`roles/cloudbuild.builds.editor`) to build the
     service.
 
+-   Artifact Registry Reader (`roles/artifactregistry.reader`) to view & get artifacts for implementing CI/CD pipeline.
+
 -   Service Account User (`roles/iam.serviceAccountUser`) permissions on the
     runtime service account to deploy the service. The default runtime service
     account is `PROJECT_ID@appspot.gserviceaccount.com`, but you can also
