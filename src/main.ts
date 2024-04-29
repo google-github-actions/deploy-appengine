@@ -93,7 +93,7 @@ export async function run(): Promise<void> {
     const envVars = parseKVString(getInput('env_vars'));
     const imageUrl = presence(getInput('image_url'));
     const version = presence(getInput('version'));
-    const promote = parseBoolean(getInput('promote'));
+    const promote = parseBoolean(getInput('promote'), true);
     const flags = presence(getInput('flags'));
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component'));

@@ -229,6 +229,16 @@ test('#run', { concurrency: true }, async (suite) => {
     assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--promote']);
   });
 
+  await suite.test('sets promote if given the empty string', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      promote: '',
+    });
+
+    await run();
+
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--promote']);
+  });
+
   await suite.test('sets no-promote if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       promote: 'false',
