@@ -50,7 +50,6 @@ import {
   parseKVString,
   pinnedToHeadWarning,
   presence,
-  stubEnv,
 } from '@google-github-actions/actions-utils';
 
 import { parseDeployResponse, parseDescribeResponse } from './output-parser';
@@ -74,10 +73,10 @@ let originalAppYamlContents: string, originalAppYamlPath: string;
  */
 export async function run(): Promise<void> {
   // Register metrics
-  const restoreEnv = stubEnv({
-    CLOUDSDK_METRICS_ENVIRONMENT: 'github-actions-deploy-appengine',
-    CLOUDSDK_METRICS_ENVIRONMENT_VERSION: appVersion,
-  });
+  process.env.CLOUDSDK_CORE_DISABLE_PROMPTS = '1';
+  process.env.CLOUDSDK_METRICS_ENVIRONMENT = 'github-actions-deploy-cloudrun';
+  process.env.CLOUDSDK_METRICS_ENVIRONMENT_VERSION = appVersion;
+  process.env.GOOGLE_APIS_USER_AGENT = `google-github-actions:deploy-appengine/${appVersion}`;
 
   // Warn if pinned to HEAD
   if (isPinnedToHead()) {
@@ -155,7 +154,7 @@ export async function run(): Promise<void> {
     const toolCommand = getToolCommand();
 
     // Create app engine gcloud cmd.
-    let appDeployCmd = ['app', 'deploy', '--quiet', '--format', 'json', ...deliverables];
+    let appDeployCmd = ['app', 'deploy', '--format', 'json', ...deliverables];
 
     // Add gcloud flags.
     if (projectId) {
@@ -219,7 +218,7 @@ export async function run(): Promise<void> {
     logDebug(`Deployed new version: ${JSON.stringify(deployResponse)}`);
 
     // Look up the new version to get metadata.
-    const appVersionsDescribeCmd = ['app', 'versions', 'describe', '--quiet', '--format', 'json'];
+    const appVersionsDescribeCmd = ['app', 'versions', 'describe', '--format', 'json'];
     appVersionsDescribeCmd.push('--project', deployResponse.project);
     appVersionsDescribeCmd.push('--service', deployResponse.service);
     appVersionsDescribeCmd.push(deployResponse.versionID);
@@ -259,8 +258,6 @@ export async function run(): Promise<void> {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-appengine failed with: ${msg}`);
   } finally {
-    restoreEnv();
-
     if (originalAppYamlPath && originalAppYamlContents) {
       logDebug(`Restoring original ${originalAppYamlPath} contents`);
       await fs.writeFile(originalAppYamlPath, originalAppYamlContents, { flag: 'w' });
