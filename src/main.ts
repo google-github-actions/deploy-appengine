@@ -56,7 +56,6 @@ import { parseDeployResponse, parseDescribeResponse } from './output-parser';
 
 // Do not listen to the linter - this can NOT be rewritten as an ES6 import
 // statement.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
 // isDebug returns true if runner debugging or step debugging is enabled.
@@ -314,7 +313,7 @@ export async function findAppYaml(list: string[]): Promise<string> {
  * @param existing The existing KEY=VALUE pairs to parse.
  * @param envVars The input environment variables.
  */
-export function updateEnvVars(existing: KVPair, envVars: KVPair): KVPair {
+export function updateEnvVars(existing: KVPair | undefined, envVars: KVPair | undefined): KVPair {
   return Object.assign({}, existing, envVars);
 }
 
