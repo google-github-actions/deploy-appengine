@@ -95,6 +95,7 @@ export async function run(): Promise<void> {
     const flags = presence(getInput('flags'));
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component'));
+    const serviceAccountEmail = presence(getInput('service_account_email'));
 
     // Validate gcloud component input
     if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
@@ -164,6 +165,9 @@ export async function run(): Promise<void> {
     }
     if (version) {
       appDeployCmd.push('--version', version);
+    }
+    if (serviceAccountEmail) {
+      appDeployCmd.push('--service-account', serviceAccountEmail);
     }
     if (promote) {
       appDeployCmd.push('--promote');
