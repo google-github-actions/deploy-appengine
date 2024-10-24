@@ -56,6 +56,13 @@ inputs:
     required: false
     default: "true"
 
+  service_account_email:
+    description: |-
+      The service account that this deployed version will run as. 
+      If this argument is not specified, the App Engine default service account 
+      will be used for your current deployed version.
+    required: false
+
   flags:
     description: |-
       Space separated list of other App Engine flags, examples can be found:
