@@ -24,43 +24,43 @@ jobs:
     runs-on: 'ubuntu-latest'
 
     steps:
-    - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
 
-    - uses: 'actions/setup-node@v4'
-      with:
-        node-version: '20.x'
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
+        with:
+          node-version: '20.x'
 
-    - name: 'npm build'
-      run: 'npm ci && npm run build'
+      - name: 'npm build'
+        run: 'npm ci && npm run build'
 
-    - uses: 'google-github-actions/auth@v2'
-      with:
-        workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
-        service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+      - uses: 'google-github-actions/auth@v2' # ratchet:exclude
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+          service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
 
-    - name: 'Update app.yaml'
-      run: |-
-        echo "service: ${{ github.job }}-${{ github.run_number }}" >> ${{ github.workspace }}/example-app/app.yaml
+      - name: 'Update app.yaml'
+        run: |-
+          echo "service: ${{ github.job }}-${{ github.run_number }}" >> ${{ github.workspace }}/example-app/app.yaml
 
-    - name: 'Deploy'
-      id: 'deploy'
-      uses: './'
-      with:
-        working_directory: '${{ github.workspace }}/example-app'
-        build_env_vars: |-
-          FOO=bar
-          ZIP=zap
-        env_vars: |-
-          FOO=bar
-          ZIP=zap
+      - name: 'Deploy'
+        id: 'deploy'
+        uses: './'
+        with:
+          working_directory: '${{ github.workspace }}/example-app'
+          build_env_vars: |-
+            FOO=bar
+            ZIP=zap
+          env_vars: |-
+            FOO=bar
+            ZIP=zap
 
-    - name: 'Verify deployment'
-      run: |-
-        curl '${{ steps.deploy.outputs.url }}' \
-          --silent \
-          --fail \
-          --location \
-          --retry 5 \
-          --retry-connrefused \
-          --retry-delay 5 \
-          --retry-max-time 300
+      - name: 'Verify deployment'
+        run: |-
+          curl '${{ steps.deploy.outputs.url }}' \
+            --silent \
+            --fail \
+            --location \
+            --retry 5 \
+            --retry-connrefused \
+            --retry-delay 5 \
+            --retry-max-time 300
