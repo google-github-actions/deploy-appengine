@@ -54,7 +54,7 @@ inputs:
     description: |-
       Promote the deployed version to receive all traffic.
     required: false
-    default: "true"
+    default: 'true'
 
   flags:
     description: |-
