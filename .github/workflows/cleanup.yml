@@ -23,15 +23,17 @@ jobs:
 
       - uses: 'google-github-actions/setup-gcloud@v2' # ratchet:exclude
 
-      - name: Delete services
+      - name: 'Delete services'
+        env:
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
         run: |-
-          gcloud config set core/project "${{ vars.PROJECT_ID }}"
+          gcloud config set "core/project" "${PROJECT_ID}"
 
           # List and delete all versions that were deployed 30 minutes ago or
           # earlier. The date math here is a little weird, but we're looking for
           # deployments "earlier than" 30 minutes ago, so it's less than since
           # time increases.
-          (IFS=$'\n'; for NAME in $(gcloud app versions list --format="value(id)" --filter="service != "default" AND version.createTime < '-pt30m'"); do
+          (IFS=$'\n'; for NAME in $(gcloud app versions list --format='value(id)' --filter='service != "default" AND version.createTime < "-pt30m"'); do
             echo "Deleting ${NAME}..."
-            gcloud app versions delete ${NAME} --quiet
+            gcloud app versions delete "${NAME}" --quiet
           done)

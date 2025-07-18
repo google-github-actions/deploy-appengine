@@ -17,7 +17,8 @@ concurrency:
 
 jobs:
   integration:
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
+    if: |-
+      ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -28,7 +29,7 @@ jobs:
 
       - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version-file: 'package.json'
 
       - name: 'npm build'
         run: 'npm ci && npm run build'
@@ -46,6 +47,7 @@ jobs:
         id: 'deploy'
         uses: './'
         with:
+          project_id: '${{ vars.PROJECT_ID }}'
           working_directory: '${{ github.workspace }}/example-app'
           build_env_vars: |-
             FOO=bar
