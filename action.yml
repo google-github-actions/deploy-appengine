@@ -6,41 +6,91 @@ description: |-
 inputs:
   project_id:
     description: |-
-      The Google Cloud Project ID. If unspecified, it is inherited from the
-      environment.
+      ID of the Google Cloud project. If not provided, this is inherited from
+      the environment.
     required: false
 
   working_directory:
     description: |-
-      The path to set the working directory. The deliverables will be referenced
-      from this path.
+      The working directory to use. **GitHub Actions do not honor [default
+      working-directory
+      settings](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrun).**
+      The `deliverables` input is a relative path based on this setting.
     required: false
 
   deliverables:
     description: |-
-      The yaml files for the services or configurations you want to deploy.
-      If not given, defaults to app.yaml in the current directory. If that is
-      not found, attempts to automatically generate necessary configuration
-      files (such as app.yaml) in the current directory.
+      The [yaml
+      files](https://cloud.google.com/appengine/docs/standard/nodejs/configuration-files#optional_configuration_files)
+      for the services or configurations you want to deploy. If not given,
+      defaults to app.yaml in the current directory. If that is not found,
+      attempts to automatically generate necessary configuration files (such as
+      app.yaml) in the current directory (example, `app.yaml cron.yaml`).
+
+      Note: The additional deliverables may require additional roles for your
+      service account user.
     required: false
 
   build_env_vars:
     description: |-
-      List of key=value pairs to set as environment variables during tbe build
-      process. This will overwrite any duplicate key environment variables
-      defined in the app.yaml.
+      List of build environment variables that should be set in the build
+      environment. These are comma-separated or newline-separated `KEY=VALUE`.
+      Keys or values that contain separators must be escaped with a backslash
+      (e.g. `\,` or `\\n`) unless quoted. Any leading or trailing whitespace is
+      trimmed unless values are quoted.
+
+      ```yaml
+      build_env_vars: |-
+        FRUIT=apple
+        SENTENCE=" this will retain leading and trailing spaces "
+      ```
+
+      This value will only be set if the input is a non-empty value. If a
+      non-empty value is given, the field values will be overwritten (not
+      merged). To remove all values, set the value to the literal string `{}`.
+
+      To include build environment variables defined in another file, use the
+      [`includes` directive][includes-directive] in your `app.yaml`.
+
+      This will overwrite any duplicate key environment variables defined in the
+      `app.yaml`.
     required: false
 
   env_vars:
     description: |-
-      List of key=value pairs to set as environment variables. This will
-      overwrite any duplicate key environment variables defined in the app.yaml.
+      List of environment variables that should be set in the environment. These
+      are comma-separated or newline-separated `KEY=VALUE`. Keys or values that
+      contain separators must be escaped with a backslash (e.g. `\,` or `\\n`)
+      unless quoted. Any leading or trailing whitespace is trimmed unless values
+      are quoted.
+
+      ```yaml
+      env_vars: |-
+        FRUIT=apple
+        SENTENCE=" this will retain leading and trailing spaces "
+      ```
+
+      This value will only be set if the input is a non-empty value. If a
+      non-empty value is given, the field values will be overwritten (not
+      merged). To remove all values, set the value to the literal string `{}`.
+
+      To include environment variables defined in another file, use the
+      [`includes` directive][includes-directive] in your `app.yaml`.
+
+      This will overwrite any duplicate key environment variables defined in the
+      `app.yaml`.
     required: false
 
   image_url:
     description: |-
-      Deploy with a specific container image. The image URL must be from one of
-      the valid GCR host names.
+      Fully-qualified name
+      of the container image to deploy. For example:
+
+          us-docker.pkg.dev/cloudrun/container/hello:latest
+
+      or
+
+          us-docker.pkg.dev/my-project/my-container/image:1.2.3
     required: false
 
   version:
@@ -58,9 +108,30 @@ inputs:
 
   flags:
     description: |-
-      Space separated list of other App Engine flags, examples can be found:
-      https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS. Ex
-      --service-account=my-account@project.iam.gserviceaccount.com --no-cache
+      Space separate list of additional Cloud Functions flags to pass to the
+      deploy command. This can be used to apply advanced features that are not
+      exposed via this GitHub Action.
+
+      ```yaml
+      with:
+        flags: '--ignore-file=...'
+      ```
+
+      Flags that include other flags must quote the _entire_ outer flag value. For
+      example, to pass `--args=-X=123`:
+
+      ```yaml
+      with:
+        flags: 'flags: '--ignore-file=...' "--args=-X=123"'
+      ```
+
+      See the [complete list of
+      flags](https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS) for
+      more information.
+
+      Please note, this GitHub Action does not parse or validate the flags. You
+      are responsible for making sure the flags are available on the gcloud
+      version and subcommand.
     required: false
 
   gcloud_version:
@@ -82,7 +153,7 @@ outputs:
   name:
     description: |-
       The fully-qualified resource name of the deployment. This will be of the
-      format "apps/<project>/services/<service>/versions/<version>".
+      format `apps/[PROJECT]/services/[SERVICE]/versions/[VERSION]`.
 
   runtime:
     description: |-
@@ -106,15 +177,10 @@ outputs:
     description: |-
       URL of the version of the AppEngine service that was deployed.
 
-  url:
-    description: |-
-      DEPRECATED: Use "version_url" instead. URL of the version of the AppEngine
-      service that was deployed.
-
 branding:
   icon: 'code'
   color: 'blue'
 
 runs:
   using: 'node24'
-  main: 'dist/index.js'
+  main: 'dist/main/index.js'
