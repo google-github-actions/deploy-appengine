@@ -37,7 +37,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v2'
+      uses: 'google-github-actions/deploy-appengine@v3'
 
     # Example of using the output
     - id: 'test'
@@ -186,7 +186,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v2'
+      uses: 'google-github-actions/deploy-appengine@v3'
 ```
 
 ### Via Application Default Credentials
@@ -201,7 +201,7 @@ jobs:
   job_id:
     steps:
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v2'
+      uses: 'google-github-actions/deploy-appengine@v3'
 ```
 
 ## Advanced Configuration
@@ -219,7 +219,7 @@ minutes.
 jobs:
   job_id:
     steps:
-    - uses: 'google-github-actions/deploy-appengine@v2'
+    - uses: 'google-github-actions/deploy-appengine@v3'
       env:
         CLOUDSDK_APP_CLOUD_BUILD_TIMEOUT: 1800 # 30 minutes
 ```
