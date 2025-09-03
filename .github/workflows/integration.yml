@@ -63,7 +63,7 @@ jobs:
 
       - name: 'Verify deployment'
         run: |-
-          curl '${{ steps.deploy.outputs.url }}' \
+          curl '${{ steps.deploy.outputs.version_url }}' \
             --silent \
             --fail \
             --location \

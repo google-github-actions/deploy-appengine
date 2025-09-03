@@ -4,7 +4,8 @@
   "description": "Github Action: Deploy to Google App Engine",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build -m src/main.ts",
+    "build": "rm -rf dist/ && ncc build -m src/main.ts -o dist/main",
+    "docs": "./node_modules/.bin/actions-gen-readme",
     "lint": "eslint .",
     "format": "eslint . --fix",
     "test": "node --require ts-node/register --test-reporter spec --test tests/**/*.test.ts"

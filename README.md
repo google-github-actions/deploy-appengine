@@ -46,77 +46,121 @@ jobs:
 
 ## Inputs
 
--   `project_id`: (Optional) ID of the Google Cloud project. If not provided,
-    this is inherited from the environment.
+<!-- BEGIN_AUTOGEN_INPUTS -->
 
--   `working_directory`: (Optional) The working directory to use. **Actions do
-    not honor [default working-directory
+-   <a name="__input_project_id"></a><a href="#user-content-__input_project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project. If not provided, this is inherited from
+    the environment.
+
+-   <a name="__input_working_directory"></a><a href="#user-content-__input_working_directory"><code>working_directory</code></a>: _(Optional)_ The working directory to use. **GitHub Actions do not honor [default
+    working-directory
     settings](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrun).**
     The `deliverables` input is a relative path based on this setting.
 
--   `deliverables`: (Optional) The [yaml
+-   <a name="__input_deliverables"></a><a href="#user-content-__input_deliverables"><code>deliverables</code></a>: _(Optional)_ The [yaml
     files](https://cloud.google.com/appengine/docs/standard/nodejs/configuration-files#optional_configuration_files)
     for the services or configurations you want to deploy. If not given,
     defaults to app.yaml in the current directory. If that is not found,
     attempts to automatically generate necessary configuration files (such as
-    app.yaml) in the current directory (example, `app.yaml cron.yaml`). Note:
-    the additional deliverables may require additional roles for your service
-    account user.
+    app.yaml) in the current directory (example, `app.yaml cron.yaml`).
 
--   `build_env_vars`: (Optional) List of key=value pairs to set as environment
-    variables during tbe build process. This will overwrite any duplicate key
-    environment variables defined in the app.yaml.
+    Note: The additional deliverables may require additional roles for your
+    service account user.
 
-    ```yaml
-    with:
-      build_env_vars: |-
-        FOO=bar
-        ZIP=zap
-    ```
-
-    Note: To include environment variables defined in another file, use the
-    [`includes` directive][includes-directive] in your app.yaml.
-
--   `env_vars`: (Optional) List of key=value pairs to set as environment
-    variables. This will overwrite any duplicate key environment variables
-    defined in the app.yaml.
+-   <a name="__input_build_env_vars"></a><a href="#user-content-__input_build_env_vars"><code>build_env_vars</code></a>: _(Optional)_ List of build environment variables that should be set in the build
+    environment. These are comma-separated or newline-separated `KEY=VALUE`.
+    Keys or values that contain separators must be escaped with a backslash
+    (e.g. `\,` or `\\n`) unless quoted. Any leading or trailing whitespace is
+    trimmed unless values are quoted.
 
     ```yaml
-    with:
-      env_vars: |-
-        FOO=bar
-        ZIP=zap
+    build_env_vars: |-
+      FRUIT=apple
+      SENTENCE=" this will retain leading and trailing spaces "
     ```
 
-    Note: To include environment variables defined in another file, use the
-    [`includes` directive][includes-directive] in your app.yaml.
+    This value will only be set if the input is a non-empty value. If a
+    non-empty value is given, the field values will be overwritten (not
+    merged). To remove all values, set the value to the literal string `{}`.
 
--   `image_url`: (Optional) Deploy with a specific container image. The image
-    url must be from one of the valid GCR hostnames (example, `gcr.io/`).
+    To include build environment variables defined in another file, use the
+    [`includes` directive][includes-directive] in your `app.yaml`.
 
--   `version`: (Optional) The version of the app that will be created or
-    replaced by this deployment. If you do not specify a version, one will be
-    generated for you.
+    This will overwrite any duplicate key environment variables defined in the
+    `app.yaml`.
 
--   `promote`: (Optional) Promote the deployed version to receive all traffic.
-    The default is `true`.
+-   <a name="__input_env_vars"></a><a href="#user-content-__input_env_vars"><code>env_vars</code></a>: _(Optional)_ List of environment variables that should be set in the environment. These
+    are comma-separated or newline-separated `KEY=VALUE`. Keys or values that
+    contain separators must be escaped with a backslash (e.g. `\,` or `\\n`)
+    unless quoted. Any leading or trailing whitespace is trimmed unless values
+    are quoted.
 
--   `flags`: (Optional) Space-separated list of other App Engine flags. This can
-    be used to access features that are not exposed via this GitHub Action.
+    ```yaml
+    env_vars: |-
+      FRUIT=apple
+      SENTENCE=" this will retain leading and trailing spaces "
+    ```
+
+    This value will only be set if the input is a non-empty value. If a
+    non-empty value is given, the field values will be overwritten (not
+    merged). To remove all values, set the value to the literal string `{}`.
+
+    To include environment variables defined in another file, use the
+    [`includes` directive][includes-directive] in your `app.yaml`.
+
+    This will overwrite any duplicate key environment variables defined in the
+    `app.yaml`.
+
+-   <a name="__input_image_url"></a><a href="#user-content-__input_image_url"><code>image_url</code></a>: _(Optional)_ Fully-qualified name
+    of the container image to deploy. For example:
+
+        us-docker.pkg.dev/cloudrun/container/hello:latest
+
+    or
+
+        us-docker.pkg.dev/my-project/my-container/image:1.2.3
+
+-   <a name="__input_version"></a><a href="#user-content-__input_version"><code>version</code></a>: _(Optional)_ The version of the app that will be created or replaced by this
+    deployment. If you do not specify a version, one will be generated for
+    you.
+
+-   <a name="__input_promote"></a><a href="#user-content-__input_promote"><code>promote</code></a>: _(Optional, default: `true`)_ Promote the deployed version to receive all traffic.
+
+-   <a name="__input_flags"></a><a href="#user-content-__input_flags"><code>flags</code></a>: _(Optional)_ Space separate list of additional Cloud Functions flags to pass to the
+    deploy command. This can be used to apply advanced features that are not
+    exposed via this GitHub Action.
 
     ```yaml
     with:
       flags: '--ignore-file=...'
     ```
 
-    See the [complete list of flags](https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS) for more information.
+    Flags that include other flags must quote the _entire_ outer flag value. For
+    example, to pass `--args=-X=123`:
 
----
+    ```yaml
+    with:
+      flags: 'flags: '--ignore-file=...' "--args=-X=123"'
+    ```
 
--   `gcloud_version`: (Optional) Version of the gcloud CLI to use. The default value is `latest`.
+    See the [complete list of
+    flags](https://cloud.google.com/sdk/gcloud/reference/app/deploy#FLAGS) for
+    more information.
 
--   `gcloud_component`: (Optional) Component of the gcloud CLI to use. Valid
-    values are `alpha` and `beta`. The default value is to use the stable track.
+    Please note, this GitHub Action does not parse or validate the flags. You
+    are responsible for making sure the flags are available on the gcloud
+    version and subcommand.
+
+-   <a name="__input_gcloud_version"></a><a href="#user-content-__input_gcloud_version"><code>gcloud_version</code></a>: _(Optional)_ Version of the Cloud SDK to install. If unspecified or set to "latest",
+    the latest available gcloud SDK version for the target platform will be
+    installed. Example: "290.0.1".
+
+-   <a name="__input_gcloud_component"></a><a href="#user-content-__input_gcloud_component"><code>gcloud_component</code></a>: _(Optional)_ Version of the Cloud SDK components to install and use. If unspecified,
+    the latest or released version will be used. This is the equivalent of
+    running 'gcloud alpha COMMAND' or 'gcloud beta COMMAND'. Valid values are
+    `alpha` or `beta`. The default value is to use the stable track.
+
+
+<!-- END_AUTOGEN_INPUTS -->
 
 ### app.yaml customizations
 
@@ -126,21 +170,25 @@ for more information.
 
 ## Outputs
 
--   `name`: The fully-qualified resource name of the deployment. This will be of
-    the format "apps/<project>/services/<service>/versions/<version>".
+<!-- BEGIN_AUTOGEN_OUTPUTS -->
 
--   `runtime`: The computed deployment runtime.
+-   <a name="__output_name"></a><a href="#user-content-__output_name"><code>name</code></a>: The fully-qualified resource name of the deployment. This will be of the
+    format `apps/[PROJECT]/services/[SERVICE]/versions/[VERSION]`.
 
--   `service_account_email`: The email address of the runtime service account.
+-   <a name="__output_runtime"></a><a href="#user-content-__output_runtime"><code>runtime</code></a>: The computed deployment runtime.
 
--   `serving_status`: The current serving status. The value is usually
-    "SERVING", unless the deployment failed to start.
+-   <a name="__output_service_account_email"></a><a href="#user-content-__output_service_account_email"><code>service_account_email</code></a>: The email address of the runtime service account.
 
--   `version_id`: Unique identifier for the version, or the specified version if
-    one was given.
+-   <a name="__output_serving_status"></a><a href="#user-content-__output_serving_status"><code>serving_status</code></a>: The current serving status. The value is usually "SERVING", unless the
+    deployment failed to start.
 
--   `version_url`: URL of the version of the AppEngine service that was
-    deployed.
+-   <a name="__output_version_id"></a><a href="#user-content-__output_version_id"><code>version_id</code></a>: Unique identifier for the version, or the specified version if one was
+    given.
+
+-   <a name="__output_version_url"></a><a href="#user-content-__output_version_url"><code>version_url</code></a>: URL of the version of the AppEngine service that was deployed.
+
+
+<!-- END_AUTOGEN_OUTPUTS -->
 
 ## Authorization
 
