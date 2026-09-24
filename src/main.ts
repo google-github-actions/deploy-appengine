@@ -214,6 +214,14 @@ export async function run(): Promise<void> {
 
     // Extract the version from the response.
     const deployResponse = parseDeployResponse(deployOutput.stdout);
+
+    // Deploying only config files (cron.yaml, dispatch.yaml, index.yaml) does
+    // not create a version, so there is nothing to describe. Completing here
+    // leaves the version outputs unset instead of failing the step.
+    if (!deployResponse.versionID) {
+      logInfo(`Deployed configs: ${deployResponse.configs.join(', ')}`);
+      return;
+    }
     logDebug(`Deployed new version: ${JSON.stringify(deployResponse)}`);
 
     // Look up the new version to get metadata.
