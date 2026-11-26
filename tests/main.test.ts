@@ -99,12 +99,12 @@ const defaultMocks = (
       };
     }),
 
-    parseDeployResponse: m.method(outputParser, 'parseDeployResponse', async () => {
+    parseDeployResponse: m.method(outputParser, 'parseDeployResponse', () => {
       return {
-        exitCode: 0,
-        stderr: '',
-        name: 'a',
-        link: 'b',
+        project: 'my-project',
+        service: 'default',
+        versionID: '123',
+        configs: [],
       };
     }),
 
@@ -261,6 +261,26 @@ test('#run', { concurrency: true }, async (suite) => {
       '--foo',
       'bar',
     ]);
+  });
+
+  await suite.test('skips the version lookup for config-only deploys', async (t) => {
+    const mocks = defaultMocks(t.mock);
+
+    t.mock.method(outputParser, 'parseDeployResponse', () => {
+      return {
+        project: '',
+        service: '',
+        versionID: '',
+        configs: ['cron'],
+      };
+    });
+
+    await run();
+
+    // Only the deploy itself runs, there is no version to describe and no
+    // version outputs to set.
+    assert.deepStrictEqual(mocks.getExecOutput.mock.callCount(), 1);
+    assert.deepStrictEqual(mocks.setOutput.mock.callCount(), 0);
   });
 
   await suite.test('sets outputs', async (t) => {

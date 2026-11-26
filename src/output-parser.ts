@@ -28,6 +28,11 @@ export interface DeployResponse {
 
   // versionID is the unique version ID.
   versionID: string;
+
+  // configs is the list of config files that were deployed, such as "cron" or
+  // "dispatch". Deploying only config files does not create a version, so for
+  // those deployments this is the only field with a value.
+  configs: string[];
 }
 
 /**
@@ -44,14 +49,20 @@ export function parseDeployResponse(stdout: string | undefined): DeployResponse 
 
     const outputJSON = JSON.parse(stdout);
     const version = outputJSON?.versions?.at(0);
-    if (!version) {
+    const configs: string[] = Array.isArray(outputJSON?.configs) ? outputJSON.configs : [];
+
+    // gcloud returns an empty "versions" list when only config files, such as
+    // cron.yaml or dispatch.yaml, were deployed. Those deployments are still
+    // successful, they just don't create a new version.
+    if (!version && configs.length === 0) {
       throw new Error(`missing or empty "versions"`);
     }
 
     return {
-      project: version['project'],
-      service: version['service'],
-      versionID: version['id'],
+      project: version?.['project'] ?? '',
+      service: version?.['service'] ?? '',
+      versionID: version?.['id'] ?? '',
+      configs: configs,
     };
   } catch (err) {
     const msg = errorMessage(err);

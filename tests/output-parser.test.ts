@@ -98,6 +98,7 @@ test('#parseDeployResponse', { concurrency: true }, async (suite) => {
         project: 'my-project',
         service: 'default',
         versionID: '20221117t121206',
+        configs: [],
       },
     },
     {
@@ -157,6 +158,7 @@ test('#parseDeployResponse', { concurrency: true }, async (suite) => {
         project: 'my-project',
         service: 'default',
         versionID: '123',
+        configs: [],
       },
     },
     {
@@ -182,6 +184,64 @@ test('#parseDeployResponse', { concurrency: true }, async (suite) => {
         project: 'my-project',
         service: 'default',
         versionID: '123',
+        configs: [],
+      },
+    },
+    {
+      name: 'with cron config only',
+      stdout: `
+        {
+          "configs": [
+            "cron"
+          ],
+          "versions": []
+        }
+      `,
+      expected: {
+        project: '',
+        service: '',
+        versionID: '',
+        configs: ['cron'],
+      },
+    },
+    {
+      name: 'with dispatch config only',
+      stdout: `
+        {
+          "configs": [
+            "dispatch"
+          ],
+          "versions": []
+        }
+      `,
+      expected: {
+        project: '',
+        service: '',
+        versionID: '',
+        configs: ['dispatch'],
+      },
+    },
+    {
+      name: 'with version and configs',
+      stdout: `
+        {
+          "configs": [
+            "cron"
+          ],
+          "versions": [
+            {
+              "id": "123",
+              "project": "my-project",
+              "service": "default"
+            }
+          ]
+        }
+      `,
+      expected: {
+        project: 'my-project',
+        service: 'default',
+        versionID: '123',
+        configs: ['cron'],
       },
     },
     {
@@ -197,6 +257,11 @@ test('#parseDeployResponse', { concurrency: true }, async (suite) => {
     {
       name: 'empty object from stdout',
       stdout: `{}`,
+      error: `missing or empty "versions"`,
+    },
+    {
+      name: 'empty versions and configs from stdout',
+      stdout: `{"configs": [], "versions": []}`,
       error: `missing or empty "versions"`,
     },
     {
